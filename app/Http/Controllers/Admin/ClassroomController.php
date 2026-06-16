@@ -18,7 +18,13 @@ class ClassroomController extends Controller
     {
         $classes = DB::table('classrooms')
             ->leftJoin('teachers', 'classrooms.walas_id', '=', 'teachers.id')
-            ->select('classrooms.*', 'teachers.nama_guru')
+            ->leftJoin(
+                DB::raw('(SELECT classroom_id, COUNT(*) as jumlah_siswa FROM students WHERE status = "aktif" AND deleted_at IS NULL GROUP BY classroom_id) as s'),
+                'classrooms.id',
+                '=',
+                's.classroom_id'
+            )
+            ->select('classrooms.*', 'teachers.nama_guru', DB::raw('COALESCE(s.jumlah_siswa, 0) as jumlah_siswa'))
             ->whereNull('classrooms.deleted_at')
             ->orderBy('tingkat', 'asc')
             ->orderBy('paralel', 'asc')

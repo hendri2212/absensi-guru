@@ -46,11 +46,16 @@
                                     <td>
                                         <div class="fw-semibold text-dark">Kelas {{ $item->tingkat }} {{ $item->paralel }}
                                         </div>
-                                        @if ($item->nama_guru)
-                                            <small class="text-muted">
-                                                <i class="bi bi-person me-1"></i>{{ $item->nama_guru }}
-                                            </small>
-                                        @endif
+                                        <div class="d-flex align-items-center gap-2 mt-1">
+                                            @if ($item->nama_guru)
+                                                <small class="text-muted">
+                                                    <i class="bi bi-person me-1"></i>{{ $item->nama_guru }}
+                                                </small>
+                                            @endif
+                                            <span class="badge bg-primary-subtle text-primary">
+                                                <i class="bi bi-people-fill me-1"></i>{{ $item->jumlah_siswa }} siswa
+                                            </span>
+                                        </div>
                                     </td>
                                     <td class="text-center pe-4">
                                         <div class="d-flex justify-content-center gap-1">
