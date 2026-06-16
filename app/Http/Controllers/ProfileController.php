@@ -11,7 +11,7 @@ class ProfileController extends Controller
 {
     public function show()
     {
-        $user    = Auth::user();
+        $user = Auth::user();
         $teacher = $user->teacher;
 
         return view('guru.profile.index', compact('user', 'teacher'));
@@ -20,8 +20,8 @@ class ProfileController extends Controller
     public function updatePassword(Request $request)
     {
         $request->validate([
-            'password_lama'    => 'required',
-            'password_baru'    => 'required|min:6|confirmed',
+            'password_lama' => 'required',
+            'password_baru' => 'required|min:6|confirmed',
         ]);
 
         $user = User::findOrFail(Auth::id());

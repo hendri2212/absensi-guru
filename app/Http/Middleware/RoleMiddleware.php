@@ -12,13 +12,14 @@ class RoleMiddleware
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect('/login');
         }
 
-        if (!in_array(strtolower($user->role), array_map('strtolower', $roles))) {
+        if (! in_array(strtolower($user->role), array_map('strtolower', $roles))) {
             abort(403, 'Akses Ditolak');
         }
+
         return $next($request);
     }
 }

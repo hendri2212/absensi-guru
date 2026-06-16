@@ -18,7 +18,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             abort(401, 'Silahkan login kembali.');
         }
 
@@ -30,33 +30,33 @@ class DashboardController extends Controller
     private function getDateRange(string $filter): array
     {
         return match ($filter) {
-            'today'    => [Carbon::now()->toDateString(), Carbon::now()->toDateString()],
-            'weekly'   => [Carbon::now()->startOfWeek()->toDateString(), Carbon::now()->endOfWeek()->toDateString()],
-            'monthly'  => [Carbon::now()->startOfMonth()->toDateString(), Carbon::now()->endOfMonth()->toDateString()],
+            'today' => [Carbon::now()->toDateString(), Carbon::now()->toDateString()],
+            'weekly' => [Carbon::now()->startOfWeek()->toDateString(), Carbon::now()->endOfWeek()->toDateString()],
+            'monthly' => [Carbon::now()->startOfMonth()->toDateString(), Carbon::now()->endOfMonth()->toDateString()],
             'semester' => $this->getSemesterRange(),
-            default    => [Carbon::now()->startOfWeek()->toDateString(), Carbon::now()->endOfWeek()->toDateString()],
+            default => [Carbon::now()->startOfWeek()->toDateString(), Carbon::now()->endOfWeek()->toDateString()],
         };
     }
 
     private function getSemesterRange(): array
     {
         $month = Carbon::now()->month;
-        $year  = Carbon::now()->year;
+        $year = Carbon::now()->year;
 
         return $month >= 7
-            ? [$year . '-07-01', $year . '-12-31']
-            : [$year . '-01-01', $year . '-06-30'];
+            ? [$year.'-07-01', $year.'-12-31']
+            : [$year.'-01-01', $year.'-06-30'];
     }
 
     public function guruDashboard(Request $request)
     {
         $teacherId = $this->getTeacherId();
-        $filter    = $request->get('filter', 'weekly');
+        $filter = $request->get('filter', 'weekly');
         [$startDate, $endDate] = $this->getDateRange($filter);
 
         // Tahun akademik
-        $allYears     = AcademicYear::orderBy('id', 'desc')->get();
-        $activeYear   = AcademicYear::where('is_active', true)->first();
+        $allYears = AcademicYear::orderBy('id', 'desc')->get();
+        $activeYear = AcademicYear::where('is_active', true)->first();
         $selectedYear = $request->filled('academic_year_id')
             ? AcademicYear::find($request->get('academic_year_id'))
             : $activeYear;
@@ -65,11 +65,13 @@ class DashboardController extends Controller
         // Base condition reusable — hindari duplikasi closure
         $attendanceFilter = function ($q) use ($startDate, $endDate, $selectedYear) {
             $q->whereBetween('tanggal', [$startDate, $endDate]);
-            if ($selectedYear) $q->where('academic_year_id', $selectedYear->id);
+            if ($selectedYear) {
+                $q->where('academic_year_id', $selectedYear->id);
+            }
         };
 
         // Stats absensi
-        $rawStats = AttendanceDetail::whereHas('attendance.schedule', fn($q) => $q->where('teacher_id', $teacherId))
+        $rawStats = AttendanceDetail::whereHas('attendance.schedule', fn ($q) => $q->where('teacher_id', $teacherId))
             ->whereHas('attendance', $attendanceFilter)
             ->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
@@ -78,18 +80,18 @@ class DashboardController extends Controller
 
         $stats = [
             'hadir' => $rawStats['Hadir'] ?? 0,
-            'izin'  => $rawStats['Izin']  ?? 0,
+            'izin' => $rawStats['Izin'] ?? 0,
             'sakit' => $rawStats['Sakit'] ?? 0,
-            'alpa'  => $rawStats['Alpa']  ?? 0,
+            'alpa' => $rawStats['Alpa'] ?? 0,
         ];
 
         // Kalkulasi global — pindah dari blade ke sini
-        $totalSemua   = array_sum($stats);
+        $totalSemua = array_sum($stats);
         $persenGlobal = $totalSemua > 0 ? round(($stats['hadir'] / $totalSemua) * 100) : 0;
         $persenColor = $persenGlobal >= 80 ? 'success' : ($persenGlobal >= 70 ? 'primary' : ($persenGlobal >= 60 ? 'warning' : 'danger'));
 
         // Siswa alpa tertinggi
-        $lowAttendanceStudents = AttendanceDetail::whereHas('attendance.schedule', fn($q) => $q->where('teacher_id', $teacherId))
+        $lowAttendanceStudents = AttendanceDetail::whereHas('attendance.schedule', fn ($q) => $q->where('teacher_id', $teacherId))
             ->whereIn('status', ['Alpa', 'Sakit', 'Izin'])
             ->whereHas('attendance', $attendanceFilter)
             ->select(
@@ -113,7 +115,7 @@ class DashboardController extends Controller
             ->join('attendance_details', 'attendance_details.attendance_id', '=', 'attendances.id')
             ->where('schedules.teacher_id', $teacherId)
             ->whereBetween('attendances.tanggal', [$startDate, $endDate])
-            ->when($selectedYear, fn($q) => $q->where('attendances.academic_year_id', $selectedYear->id))
+            ->when($selectedYear, fn ($q) => $q->where('attendances.academic_year_id', $selectedYear->id))
             ->selectRaw("
             classrooms.id as classroom_id,
             classrooms.tingkat,
@@ -128,9 +130,10 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($rk) {
                 $total = $rk->hadir + $rk->izin + $rk->sakit + $rk->alpa;
-                $rk->total    = $total;
-                $rk->persen   = $total > 0 ? round(($rk->hadir / $total) * 100) : 0;
+                $rk->total = $total;
+                $rk->persen = $total > 0 ? round(($rk->hadir / $total) * 100) : 0;
                 $rk->color = $rk->persen >= 80 ? 'success' : ($rk->persen >= 70 ? 'primary' : ($rk->persen >= 50 ? 'warning' : 'danger'));
+
                 return $rk;
             });
 
@@ -138,7 +141,7 @@ class DashboardController extends Controller
         $kelasTermburuk = $rekapKelas->sortBy('persen')->first();
 
         // Jadwal hari ini
-        $hariIni       = Carbon::now()->locale('id')->dayName;
+        $hariIni = Carbon::now()->locale('id')->dayName;
         $jadwalHariIni = Schedule::with(['subject:id,nama_mapel', 'classroom:id,tingkat,paralel'])
             ->where('teacher_id', $teacherId)
             ->where('hari', $hariIni)
@@ -181,11 +184,11 @@ class DashboardController extends Controller
     public function rekapKelas(Request $request, $classroom_id)
     {
         $teacherId = $this->getTeacherId();
-        $filter    = $request->get('filter', 'weekly');
+        $filter = $request->get('filter', 'weekly');
 
         [$startDate, $endDate] = $this->getDateRange($filter);
 
-        $classroom  = Classroom::findOrFail($classroom_id);
+        $classroom = Classroom::findOrFail($classroom_id);
         $activeYear = AcademicYear::where('is_active', true)->first();
 
         $rekapSiswa = DB::table('students')
@@ -223,7 +226,7 @@ class DashboardController extends Controller
         $teacherId = $this->getTeacherId();
 
         $classrooms = Classroom::where('walas_id', $teacherId)
-            ->orWhereHas('schedules', fn($q) => $q->where('teacher_id', $teacherId))
+            ->orWhereHas('schedules', fn ($q) => $q->where('teacher_id', $teacherId))
             ->orderBy('tingkat', 'asc')
             ->orderBy('paralel', 'asc')
             ->withCount('students')
@@ -234,7 +237,7 @@ class DashboardController extends Controller
 
     public function showClassroom($id)
     {
-        $classroom = Classroom::with(['students' => fn($q) => $q->orderBy('nama', 'asc')])->findOrFail($id);
+        $classroom = Classroom::with(['students' => fn ($q) => $q->orderBy('nama', 'asc')])->findOrFail($id);
 
         return view('guru.kelas.show', compact('classroom'));
     }

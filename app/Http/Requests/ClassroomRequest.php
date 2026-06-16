@@ -18,14 +18,14 @@ class ClassroomRequest extends FormRequest
         $classroomId = $this->route('classroom')?->id;
 
         return [
-            'tingkat'  => 'required|in:VII,VIII,IX',
-            'paralel'  => [
+            'tingkat' => 'required|in:VII,VIII,IX',
+            'paralel' => [
                 'required',
                 'in:A,B,C,D,E,F,G,H',
                 // Validasi unik kombinasi tingkat dan paralel
                 Rule::unique('classrooms')->where(function ($query) {
                     return $query->where('tingkat', $this->tingkat);
-                })->ignore($classroomId)
+                })->ignore($classroomId),
             ],
             'walas_id' => 'required|exists:teachers,id',
         ];

@@ -3,8 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-
+/**
+ * @property-read User|null $user
+ * @property-read School|null $school
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Schedule> $schedules
+ */
 class Teacher extends Model
 {
     protected $fillable = [
@@ -16,20 +22,20 @@ class Teacher extends Model
         'tgl_lahir',
         'alamat',
         'no_telp',
-        'school_id'
+        'school_id',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function school()
+    public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);
     }
 
-    public function schedules()
+    public function schedules(): HasMany
     {
         return $this->hasMany(Schedule::class, 'teacher_id');
     }

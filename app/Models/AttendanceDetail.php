@@ -3,22 +3,26 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property-read Student|null $student
+ * @property-read Attendance|null $attendance
+ */
 class AttendanceDetail extends Model
 {
     protected $fillable = [
         'attendance_id',
         'student_id',
-        'status'
+        'status',
     ];
 
-    public function student()
+    public function student(): BelongsTo
     {
-        // Relasi ini bilang kalau satu baris detail absen dimiliki oleh satu siswa
         return $this->belongsTo(Student::class, 'student_id');
     }
 
-    public function attendance()
+    public function attendance(): BelongsTo
     {
         return $this->belongsTo(Attendance::class, 'attendance_id');
     }

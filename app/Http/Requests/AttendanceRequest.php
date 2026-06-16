@@ -14,11 +14,11 @@ class AttendanceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'schedule_id'          => 'required|exists:schedules,id',
-            'tanggal'              => 'required|date',
-            'absensi'              => 'required|array',
+            'schedule_id' => 'required|exists:schedules,id',
+            'tanggal' => 'required|date',
+            'absensi' => 'required|array',
             'absensi.*.student_id' => 'required|exists:students,id',
-            'absensi.*.status'     => 'required|in:Sakit,Izin,Alpa,Hadir',
+            'absensi.*.status' => 'required|in:Sakit,Izin,Alpa,Hadir',
         ];
     }
 }

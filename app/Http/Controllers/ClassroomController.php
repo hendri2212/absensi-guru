@@ -42,9 +42,10 @@ class ClassroomController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Kelas berhasil dibuat',
-            'data' => $classroom
+            'data' => $classroom,
         ], 201);
     }
+
     /**
      * Display the specified resource.
      */
@@ -53,7 +54,7 @@ class ClassroomController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Data kelas ditemukan',
-            'data' => $classroom
+            'data' => $classroom,
         ], 200);
     }
 
@@ -75,7 +76,7 @@ class ClassroomController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Data kelas berhasil diupdate',
-            'data' => $classroom
+            'data' => $classroom,
         ], 200);
     }
 
@@ -86,16 +87,16 @@ class ClassroomController extends Controller
     {
         if ($classroom->students()->exists() || $classroom->schedules()->exists()) {
             return response()->json([
-                'status'  => false,
-                'message' => 'Kelas tidak dapat dihapus karena masih memiliki siswa atau jadwal aktif.'
+                'status' => false,
+                'message' => 'Kelas tidak dapat dihapus karena masih memiliki siswa atau jadwal aktif.',
             ], 422);
         }
 
         $classroom->delete();
 
         return response()->json([
-            'status'  => true,
-            'message' => 'Kelas ' . $classroom->tingkat . '-' . $classroom->paralel . ' berhasil dihapus.'
+            'status' => true,
+            'message' => 'Kelas '.$classroom->tingkat.'-'.$classroom->paralel.' berhasil dihapus.',
         ]);
     }
 }

@@ -12,10 +12,10 @@ class AdminController extends Controller
 {
     public function index(Request $request)
     {
-        $filter         = $request->get('filter', 'weekly');
+        $filter = $request->get('filter', 'weekly');
         $selectedYearId = $request->get('academic_year_id');
 
-        $allYears   = AcademicYear::orderBy('id', 'desc')->get();
+        $allYears = AcademicYear::orderBy('id', 'desc')->get();
         $activeYear = $selectedYearId
             ? AcademicYear::find($selectedYearId)
             : AcademicYear::where('is_active', true)->first();
@@ -23,9 +23,9 @@ class AdminController extends Controller
         // ✅ Pindah date range ke helper method — konsisten dengan DashboardController guru
         [$startDate, $endDate] = $this->getDateRange($filter);
 
-        $today      = now()->toDateString();
+        $today = now()->toDateString();
         $daftarHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        $hariIni    = $daftarHari[now()->dayOfWeek];
+        $hariIni = $daftarHari[now()->dayOfWeek];
 
         // Keaktifan guru
         $keaktifanGuru = DB::table('teachers')
@@ -44,44 +44,47 @@ class AdminController extends Controller
                     $join->where('attendances.academic_year_id', $activeYear->id);
                 }
             })
-            ->selectRaw("
+            ->selectRaw('
         teachers.id,
         teachers.nama_guru,
         COUNT(DISTINCT attendances.id) as total_absen,
         COUNT(DISTINCT schedules.id) as total_jadwal
-    ")
+    ')
             ->groupBy('teachers.id', 'teachers.nama_guru')
             ->get()
             ->map(function ($item) use ($startDate, $endDate) {
 
-                $start  = \Carbon\Carbon::parse($startDate);
-                $end    = \Carbon\Carbon::parse($endDate);
+                $start = \Carbon\Carbon::parse($startDate);
+                $end = \Carbon\Carbon::parse($endDate);
 
                 $minggu = max(1, $start->diffInWeeks($end) + 1);
 
                 $expectedPertemuan = $item->total_jadwal * $minggu;
 
-                $item->persentase = $expectedPertemuan > 0
-                    ? min(100, round(($item->total_absen / $expectedPertemuan) * 100))
+                $persentase = $expectedPertemuan > 0
+                    ? (int) min(100, round(($item->total_absen / $expectedPertemuan) * 100))
                     : 0;
 
-                $item->statusLabel = match (true) {
-                    $item->persentase >= 80 => 'Aktif',
-                    $item->persentase >= 50 => 'Cukup',
-                    default                 => 'Bermasalah',
+                $statusLabel = match (true) {
+                    $persentase >= 80 => 'Aktif',
+                    $persentase >= 50 => 'Cukup',
+                    default => 'Bermasalah',
                 };
 
-                $item->statusColor = match (true) {
-                    $item->persentase >= 80 => 'success',
-                    $item->persentase >= 50 => 'warning',
-                    default                 => 'danger',
+                $statusColor = match (true) {
+                    $persentase >= 80 => 'success',
+                    $persentase >= 50 => 'warning',
+                    default => 'danger',
                 };
+
+                $item->persentase = $persentase;
+                $item->statusLabel = $statusLabel;
+                $item->statusColor = $statusColor;
 
                 return $item;
             })
             ->sortByDesc('persentase')
             ->values();
-
 
         // ==========================
         // PAGINATION MANUAL
@@ -106,7 +109,6 @@ class AdminController extends Controller
             ]
         );
 
-
         // ==========================
         // TOP PERFORMER
         // ==========================
@@ -116,7 +118,7 @@ class AdminController extends Controller
             ->values();
         // ✅ FIX: guru aktif = persentase >= 80, bukan sekadar total_absen > 0
         $totalGuruAktif = $keaktifanGuru->where('persentase', '>=', 80)->count();
-        $totalGuru      = $keaktifanGuru->count();
+        $totalGuru = $keaktifanGuru->count();
 
         // ✅ Top 5 performer — ambil dari collection yang sudah di-sort
         $topPerformer = $keaktifanGuru->take(5);
@@ -138,7 +140,7 @@ class AdminController extends Controller
             })
             ->whereNull('attendances.id')
             ->where('schedules.hari', $hariIni)
-            ->when($activeYear, fn($q) => $q->where('schedules.academic_year_id', $activeYear->id))
+            ->when($activeYear, fn ($q) => $q->where('schedules.academic_year_id', $activeYear->id))
             ->select(
                 'schedules.id',
                 'teachers.nama_guru',
@@ -155,23 +157,23 @@ class AdminController extends Controller
         $trendHarian = DB::table('attendances')
             ->join('schedules', 'schedules.id', '=', 'attendances.schedule_id')
             ->whereBetween('attendances.tanggal', [$startDate, $endDate])
-            ->when($activeYear, fn($q) => $q->where('attendances.academic_year_id', $activeYear->id))
-            ->selectRaw("
+            ->when($activeYear, fn ($q) => $q->where('attendances.academic_year_id', $activeYear->id))
+            ->selectRaw('
             DATE(attendances.tanggal) as tanggal,
             COUNT(DISTINCT schedules.teacher_id) as total_guru
-        ")
+        ')
             ->groupBy('attendances.tanggal')
             ->orderBy('attendances.tanggal')
             ->get();
 
         $chartLabels = $trendHarian->pluck('tanggal')
-            ->map(fn($t) => \Carbon\Carbon::parse($t)->translatedFormat('d M'))
+            ->map(fn ($t) => \Carbon\Carbon::parse($t)->translatedFormat('d M'))
             ->values();
         $chartData = $trendHarian->pluck('total_guru')->values();
 
         // ✅ Insight chart
-        $rataRataGuru  = $chartData->count() > 0 ? round($chartData->avg()) : 0;
-        $hariTerAktif  = $trendHarian->sortByDesc('total_guru')->first();
+        $rataRataGuru = $chartData->count() > 0 ? round($chartData->avg()) : 0;
+        $hariTerAktif = $trendHarian->sortByDesc('total_guru')->first();
         $hariTerAktifLabel = $hariTerAktif
             ? \Carbon\Carbon::parse($hariTerAktif->tanggal)->translatedFormat('l, d M')
             : null;
@@ -198,12 +200,12 @@ class AdminController extends Controller
     private function getDateRange(string $filter): array
     {
         return match ($filter) {
-            'today'    => [now()->toDateString(), now()->toDateString()],
-            'monthly'  => [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()],
+            'today' => [now()->toDateString(), now()->toDateString()],
+            'monthly' => [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()],
             'semester' => now()->month >= 7
-                ? [now()->year . '-07-01', now()->year . '-12-31']
-                : [now()->year . '-01-01', now()->year . '-06-30'],
-            default    => [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()],
+                ? [now()->year.'-07-01', now()->year.'-12-31']
+                : [now()->year.'-01-01', now()->year.'-06-30'],
+            default => [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()],
         };
     }
 }

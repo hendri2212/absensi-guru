@@ -4,7 +4,7 @@
 @section('content')
     <div class="container py-4">
 
-        {{-- Alert error - custom modern --}}
+        {{-- Alert error --}}
         @if ($errors->any())
             <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert"
                 style="border-left: 4px solid #dc2626; background-color: #fef2f2;">
@@ -23,7 +23,7 @@
             </div>
         @endif
 
-        {{-- Header - PAKAI CLASS bg-gradient-header --}}
+        {{-- Header --}}
         <div class="card border-0 rounded-4 mb-4 bg-gradient-header shadow">
             <div class="card-body px-4 py-4">
                 <div class="d-flex justify-content-between align-items-center gap-3">
@@ -36,7 +36,7 @@
                                 Siswa Kelas {{ $kelas->tingkat }}-{{ $kelas->paralel }}
                             </h5>
                             <p class="mb-0 text-white opacity-75 small">
-                                Total: {{ count($students) }} siswa terdaftar
+                                Total: {{ $students->total() }} siswa terdaftar
                             </p>
                         </div>
                     </div>
@@ -77,7 +77,8 @@
                         <tbody>
                             @forelse($students as $index => $s)
                                 <tr>
-                                    <td class="ps-4 text-muted small">{{ $index + 1 }}</td>
+                                    {{-- Nomor urut tetap benar di halaman 2, 3, dst --}}
+                                    <td class="ps-4 text-muted small">{{ $students->firstItem() + $index }}</td>
                                     <td>
                                         <div class="fw-semibold text-dark">{{ $s->nama }}</div>
                                         <small class="text-muted">{{ $s->nis }}</small>
@@ -124,12 +125,23 @@
                         </tbody>
                     </table>
                 </div>
+
+                {{-- Pagination desktop --}}
+                @if ($students->hasPages())
+                    <div class="d-flex justify-content-between align-items-center mt-4 px-1">
+                        <small class="text-muted">
+                            {{ $students->firstItem() }}–{{ $students->lastItem() }}
+                            dari {{ $students->total() }} siswa
+                        </small>
+                        {{ $students->links('pagination::bootstrap-5') }}
+                    </div>
+                @endif
             </div>
         </div>
 
         {{-- MOBILE: Card list --}}
         <div class="d-md-none">
-            @forelse($students as $index => $s)
+            @forelse($students as $s)
                 <div class="card border-0 shadow rounded-3 mb-3">
                     <div class="card-body py-3 px-3">
                         <div class="d-flex justify-content-between align-items-start gap-2">
@@ -171,7 +183,19 @@
                     Belum ada siswa di kelas ini.
                 </div>
             @endforelse
+
+            {{-- Pagination mobile --}}
+            @if ($students->hasPages())
+                <div class="d-flex justify-content-between align-items-center mt-4 px-1">
+                    <small class="text-muted">
+                        {{ $students->firstItem() }}–{{ $students->lastItem() }}
+                        dari {{ $students->total() }} siswa
+                    </small>
+                    {{ $students->links('pagination::bootstrap-5') }}
+                </div>
+            @endif
         </div>
+
     </div>
 
     {{-- Modal Tambah Siswa --}}
@@ -220,14 +244,12 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">No. Telp Siswa</label>
-                            <input type="tel" name="no_telp" class="form-control" maxlength="13"
-                                pattern="[0-9]{10,13}">
+                            <input type="tel" name="no_telp" class="form-control" maxlength="13">
                             <div class="form-text small text-muted">Format: 08xxxxxxxxx</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">No. Telp Ortu</label>
-                            <input type="tel" name="no_telp_ortu" class="form-control" maxlength="13"
-                                pattern="[0-9]{10,13}">
+                            <input type="tel" name="no_telp_ortu" class="form-control" maxlength="13">
                             <div class="form-text small text-muted">Format: 08xxxxxxxxx</div>
                         </div>
                     </div>
@@ -339,9 +361,7 @@
                         <div class="row g-3 text-start">
                             <div class="col-6">
                                 <div class="text-muted small mb-1">Jenis Kelamin</div>
-                                <div class="fw-semibold small">
-                                    {{ $s->jk == 'L' ? 'Laki-laki' : 'Perempuan' }}
-                                </div>
+                                <div class="fw-semibold small">{{ $s->jk == 'L' ? 'Laki-laki' : 'Perempuan' }}</div>
                             </div>
                             <div class="col-6">
                                 <div class="text-muted small mb-1">Agama</div>
@@ -355,9 +375,7 @@
                             </div>
                             <div class="col-6">
                                 <div class="text-muted small mb-1">Kelas</div>
-                                <div class="fw-semibold small">
-                                    {{ $kelas->tingkat }}-{{ $kelas->paralel }}
-                                </div>
+                                <div class="fw-semibold small">{{ $kelas->tingkat }}-{{ $kelas->paralel }}</div>
                             </div>
                             <div class="col-12">
                                 <div class="text-muted small mb-1">Alamat</div>

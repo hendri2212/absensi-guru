@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Evaluationdetail;
+use App\Models\EvaluationDetail;
 use Illuminate\Http\Request;
 
 class EvaluationDetailController extends Controller

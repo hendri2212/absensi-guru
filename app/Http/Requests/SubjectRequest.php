@@ -16,7 +16,7 @@ class SubjectRequest extends FormRequest
         $subjectId = $this->route('subject')?->id;
 
         return [
-            'nama_mapel' => 'required|string|unique:subjects,nama_mapel,' . $subjectId,
+            'nama_mapel' => 'required|string|unique:subjects,nama_mapel,'.$subjectId,
         ];
     }
 

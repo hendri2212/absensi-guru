@@ -2,13 +2,19 @@
 
 namespace App\Models;
 
-use App\Models\EvaluationDetail;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EvaluationDetail> $details
+ * @property-read Subject|null $subject
+ * @property-read Classroom|null $classroom
+ * @property-read Schedule|null $schedule
+ */
 class Evaluation extends Model
 {
-
     use SoftDeletes;
 
     protected $fillable = [
@@ -20,31 +26,29 @@ class Evaluation extends Model
         'semester',
         'jenis',
         'nama_penilaian',
-        'tanggal'
+        'tanggal',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
     ];
 
-    protected $dates = ['deleted_at'];
-
-    public function details()
+    public function details(): HasMany
     {
         return $this->hasMany(EvaluationDetail::class, 'evaluation_id');
     }
 
-    public function subject()
+    public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class, 'subject_id');
     }
 
-    public function classroom()
+    public function classroom(): BelongsTo
     {
         return $this->belongsTo(Classroom::class, 'classroom_id');
     }
 
-    public function schedule()
+    public function schedule(): BelongsTo
     {
         return $this->belongsTo(Schedule::class, 'schedule_id');
     }

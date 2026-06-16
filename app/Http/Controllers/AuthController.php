@@ -15,6 +15,7 @@ class AuthController extends Controller
             'Expires' => '0',
         ]);
     }
+
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -41,7 +42,6 @@ class AuthController extends Controller
             'username' => 'Akun tidak ditemukan atau password salah.',
         ]);
     }
-
 
     public function logout(Request $request)
     {

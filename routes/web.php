@@ -24,6 +24,7 @@ Route::get('/', function () {
             ? redirect()->route('admin.dashboard')
             : redirect()->route('guru.dashboard');
     }
+
     return redirect()->route('login');
 });
 
@@ -46,7 +47,7 @@ Route::middleware('auth')->group(function () {
     // MODUL GURU
     // ------------------------------------------
     Route::prefix('guru')->name('guru.')->group(function () {
-        //Profile
+        // Profile
         Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
         Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
@@ -65,7 +66,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/absensi/{schedule_id}/update', [AttendanceController::class, 'updateAbsensi'])->name('absensi.update');
         Route::get('/absensi/{schedule_id}/history', [AttendanceController::class, 'historyAbsensi'])->name('absensi.history');
         Route::get('/absensi/{schedule_id}/history/{attendance_id}', [AttendanceController::class, 'historyDetail'])->name('absensi.history.detail');
-
 
         // Penilaian
         Route::get('/penilaian', [EvaluationController::class, 'index'])->name('penilaian.index');
@@ -108,7 +108,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/kelas/{kelas_id}/students', [StudentController::class, 'store'])->name('kelas.students.store');
         Route::post('/kelas/{kelas_id}/students/import', [StudentController::class, 'import'])->name('students.import');
 
-        //kelas
+        // kelas
         Route::put('/kelas/{kelas_id}/students/{id}', [StudentController::class, 'update'])->name('kelas.students.update');
         Route::delete('/kelas/{kelas_id}/students/{id}', [StudentController::class, 'destroy'])->name('kelas.students.destroy');
 

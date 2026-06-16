@@ -26,6 +26,7 @@ class LoginController extends Controller
         // Tambahkan $remember sebagai parameter kedua
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
+
             return redirect()->route('admin.dashboard');
         }
 

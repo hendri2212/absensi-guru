@@ -301,7 +301,7 @@
                     </tbody>
                 </table>
                 @if ($teachers->hasPages())
-                    <div class="d-flex justify-content-between align-items-center mt-4 px-1">
+                    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
                         <small class="text-muted">
                             {{ $teachers->firstItem() }}–{{ $teachers->lastItem() }}
                             dari {{ $teachers->total() }} guru

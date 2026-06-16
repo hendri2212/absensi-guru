@@ -30,9 +30,9 @@ class AcademicYearRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'tahun.required'    => 'Tahun akademik wajib diisi.',
+            'tahun.required' => 'Tahun akademik wajib diisi.',
             'semester.required' => 'Pilih salah satu semester.',
-            'semester.in'       => 'Format semester tidak valid.',
+            'semester.in' => 'Format semester tidak valid.',
         ];
     }
 }

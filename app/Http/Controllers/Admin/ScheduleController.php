@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class ScheduleController extends Controller
 {
-    //ambil data jadwal serta nama kelas dan nama guru nya
+    // ambil data jadwal serta nama kelas dan nama guru nya
     public function index()
     {
         $classrooms = DB::table('classrooms')
@@ -18,7 +18,18 @@ class ScheduleController extends Controller
             ->orderBy('paralel')
             ->get()
             ->groupBy('tingkat');
-        return view('admin.jadwal.index', compact('classrooms'));
+
+        $teachers = DB::table('teachers')
+            ->whereNull('deleted_at')
+            ->orderBy('nama_guru')
+            ->get();
+
+        $subjects = DB::table('subjects')
+            ->whereNull('deleted_at')
+            ->orderBy('nama_mapel')
+            ->get();
+
+        return view('admin.jadwal.index', compact('classrooms', 'teachers', 'subjects'));
     }
 
     // show → filter hari + jadwal
@@ -39,7 +50,7 @@ class ScheduleController extends Controller
 
         $activeYear = DB::table('academic_years')->where('is_active', 1)->first();
 
-        if (!$activeYear) {
+        if (! $activeYear) {
             return redirect()->route('admin.jadwal.index')
                 ->with('error', 'Tidak ada tahun ajaran aktif.');
         }
@@ -76,29 +87,27 @@ class ScheduleController extends Controller
         return view('admin.jadwal.create', compact('classrooms', 'teachers', 'subjects'));
     }
 
-
-
     public function store(ScheduleRequest $request)
     {
         $activeYear = AcademicYear::where('is_active', true)->first();
 
-        if (!$activeYear) {
+        if (! $activeYear) {
             return redirect()->back()->with('error', 'Tidak ada tahun akademik aktif. Silakan aktifkan tahun akademik terlebih dahulu.');
         }
 
         $validated = $request->validated();
 
         DB::table('schedules')->insert([
-            'classroom_id'     => $validated['classroom_id'],
-            'teacher_id'       => $validated['teacher_id'],
-            'subject_id'       => $validated['subject_id'],
-            'hari'             => $validated['hari'],
-            'jam_mulai'        => $validated['jam_mulai'],
-            'jam_habis'        => $validated['jam_habis'],
+            'classroom_id' => $validated['classroom_id'],
+            'teacher_id' => $validated['teacher_id'],
+            'subject_id' => $validated['subject_id'],
+            'hari' => $validated['hari'],
+            'jam_mulai' => $validated['jam_mulai'],
+            'jam_habis' => $validated['jam_habis'],
             'academic_year_id' => $activeYear->id,
-            'semester'         => $activeYear->semester,
-            'created_at'       => now(),
-            'updated_at'       => now(),
+            'semester' => $activeYear->semester,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return redirect()->back()->with('success', 'Jadwal berhasil ditambahkan!');
@@ -106,10 +115,10 @@ class ScheduleController extends Controller
 
     public function edit($id)
     {
-        $schedule   = Schedule::findOrFail($id);
+        $schedule = Schedule::findOrFail($id);
         $classrooms = DB::table('classrooms')->get();
-        $teachers   = DB::table('teachers')->get();
-        $subjects   = DB::table('subjects')->get();
+        $teachers = DB::table('teachers')->get();
+        $subjects = DB::table('subjects')->get();
 
         return view('admin.jadwal.index', compact('schedule', 'classrooms', 'teachers', 'subjects'));
     }
@@ -117,7 +126,7 @@ class ScheduleController extends Controller
     public function update(ScheduleRequest $request, $id)
     {
         $validated = $request->validated();
-        $schedule  = Schedule::findOrFail($id);
+        $schedule = Schedule::findOrFail($id);
 
         if ($schedule->attendances()->exists() || $schedule->evaluations()->exists()) {
             return redirect()->back()->with('error', 'Jadwal tidak dapat diubah karena sudah memiliki data absensi atau penilaian.');

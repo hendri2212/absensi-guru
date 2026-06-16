@@ -15,12 +15,11 @@ use Illuminate\Support\Facades\DB;
 
 class EvaluationController extends Controller
 {
-
     private function getTeacherId()
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             abort(401, 'Silahkan login kembali.');
         }
 
@@ -34,7 +33,7 @@ class EvaluationController extends Controller
         $teacherId = $this->getTeacherId();
 
         $activeYear = \App\Models\AcademicYear::where('is_active', true)->first();
-        if (!$activeYear) {
+        if (! $activeYear) {
             return redirect()->back()->with('error', 'Tidak ada tahun ajaran aktif.');
         }
 
@@ -50,13 +49,13 @@ class EvaluationController extends Controller
             ->whereIn('id', $scheduleIds)
             ->get()
             ->map(function ($schedule) use ($teacherId, $activeYear) {
-                $schedule->all_evaluations = Evaluation::where('subject_id', $schedule->subject_id)
+                $schedule->setAttribute('all_evaluations', Evaluation::where('subject_id', $schedule->subject_id)
                     ->where('classroom_id', $schedule->classroom_id)
                     ->where('teacher_id', $teacherId)
-                    ->where('academic_year_id', $activeYear->id) // tambah
+                    ->where('academic_year_id', $activeYear->id)
                     ->latest()
                     ->take(5)
-                    ->get();
+                    ->get());
 
                 return $schedule;
             });
@@ -69,7 +68,7 @@ class EvaluationController extends Controller
      */
     public function create($schedule_id)
     {
-        if (!$schedule_id) {
+        if (! $schedule_id) {
             return redirect()->route('guru.evaluations.index')->with('error', 'Silahkan pilih kelas terlebih dahulu.');
         }
 
@@ -87,11 +86,11 @@ class EvaluationController extends Controller
      */
     public function store(EvaluationRequest $request)
     {
-        $teacherId  = $this->getTeacherId();
-        $validated  = $request->validated();
+        $teacherId = $this->getTeacherId();
+        $validated = $request->validated();
         $activeYear = AcademicYear::where('is_active', true)->first();
 
-        if (!$activeYear) {
+        if (! $activeYear) {
             return back()->with('error', 'Tahun ajaran aktif belum diatur oleh admin.');
         }
 
@@ -99,17 +98,17 @@ class EvaluationController extends Controller
 
         $evaluation = Evaluation::updateOrCreate(
             [
-                'subject_id'       => $validated['subject_id'],
-                'classroom_id'     => $schedule->classroom_id,
-                'teacher_id'       => $teacherId,
-                'jenis'            => $validated['jenis'],
-                'nama_penilaian'   => $validated['nama_penilaian'],
+                'subject_id' => $validated['subject_id'],
+                'classroom_id' => $schedule->classroom_id,
+                'teacher_id' => $teacherId,
+                'jenis' => $validated['jenis'],
+                'nama_penilaian' => $validated['nama_penilaian'],
                 'academic_year_id' => $activeYear->id,
             ],
             [
                 'schedule_id' => $validated['schedule_id'],
-                'tanggal'     => $validated['tanggal'],
-                'semester'    => $activeYear->semester,
+                'tanggal' => $validated['tanggal'],
+                'semester' => $activeYear->semester,
             ]
         );
 
@@ -118,7 +117,7 @@ class EvaluationController extends Controller
                 EvaluationDetail::updateOrCreate(
                     [
                         'evaluation_id' => $evaluation->id,
-                        'student_id'    => $studentId,
+                        'student_id' => $studentId,
                     ],
                     ['nilai' => $data['nilai']]
                 );
@@ -128,13 +127,14 @@ class EvaluationController extends Controller
         return redirect()->route('guru.evaluations.index')
             ->with('success', 'Nilai siswa berhasil di input.');
     }
+
     /**
      * Display the specified resource.
      */
     public function show($id)
     {
         $evaluation = Evaluation::withTrashed()
-            ->with(['details' => fn($q) => $q->with('student')->orderBy(
+            ->with(['details' => fn ($q) => $q->with('student')->orderBy(
                 Student::select('nama')->whereColumn('students.id', 'evaluation_details.student_id')->limit(1)
             ), 'subject', 'classroom'])
             ->findOrFail($id);
@@ -156,7 +156,7 @@ class EvaluationController extends Controller
                     ->where('student_id', $student->id)
                     ->first();
 
-                $student->nilai_saat_ini = $detail ? $detail->nilai : null;
+                $student->setAttribute('nilai_saat_ini', $detail ? $detail->nilai : null);
 
                 return $student;
             });
@@ -188,6 +188,7 @@ class EvaluationController extends Controller
                 }
             }
         });
+
         return redirect()->route('guru.evaluations.show', $evaluation->id)
             ->with('success', 'Data dan nilai siswa berhasil diperbarui.');
     }
@@ -196,13 +197,13 @@ class EvaluationController extends Controller
     {
         try {
             $evaluation = Evaluation::findOrFail($id);
-            $evaluation->details()->each(fn($d) => $d->delete());
+            $evaluation->details()->each(fn ($d) => $d->delete());
             $evaluation->delete();
 
             return redirect()->route('guru.evaluations.index')
                 ->with('success', 'Data penilaian berhasil dipindahkan ke tempat sampah.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menghapus: '.$e->getMessage());
         }
     }
 
@@ -212,7 +213,7 @@ class EvaluationController extends Controller
 
         $trashedEvaluations = Evaluation::onlyTrashed()
             ->with(['subject', 'classroom', 'details'])
-            ->when($activeYear, fn($q) => $q->where('academic_year_id', $activeYear->id)) // tambah
+            ->when($activeYear, fn ($q) => $q->where('academic_year_id', $activeYear->id)) // tambah
             ->latest('deleted_at')
             ->get();
 

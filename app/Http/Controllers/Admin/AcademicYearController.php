@@ -15,6 +15,7 @@ class AcademicYearController extends Controller
     public function index()
     {
         $years = AcademicYear::orderBy('id', 'desc')->get();
+
         return view('admin.tahun-ajaran.index', compact('years'));
     }
 
@@ -34,8 +35,8 @@ class AcademicYearController extends Controller
         $validated = $request->validated();
 
         AcademicYear::create([
-            'tahun'     => $validated['tahun'],
-            'semester'  => $validated['semester'],
+            'tahun' => $validated['tahun'],
+            'semester' => $validated['semester'],
             'is_active' => false,
         ]);
 

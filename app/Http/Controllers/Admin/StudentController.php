@@ -16,10 +16,10 @@ class StudentController extends Controller
 {
     public function index($kelas_id)
     {
-        $kelas    = Classroom::findOrFail($kelas_id);
+        $kelas = Classroom::findOrFail($kelas_id);
         $students = Student::where('classroom_id', $kelas_id)
             ->orderBy('nama', 'asc')
-            ->get();
+            ->paginate(20);
 
         $allClasses = Classroom::orderBy('tingkat')->orderBy('paralel')->get();
 
@@ -29,13 +29,13 @@ class StudentController extends Controller
     public function store(Request $request, $kelas_id)
     {
         $validator = Validator::make($request->all(), [
-            'nama'         => 'required|string',
-            'nis'          => 'required|max:10|unique:students,nis',
-            'jk'           => 'required|in:L,P',
-            'agama'        => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
-            'tgl_lahir'    => 'required|date',
-            'alamat'       => 'required|string',
-            'no_telp'      => 'nullable|string',
+            'nama' => 'required|string',
+            'nis' => 'required|max:10|unique:students,nis',
+            'jk' => 'required|in:L,P',
+            'agama' => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
+            'tgl_lahir' => 'required|date',
+            'alamat' => 'required|string',
+            'no_telp' => 'nullable|string',
             'no_telp_ortu' => 'nullable|string',
         ]);
 
@@ -51,13 +51,13 @@ class StudentController extends Controller
     public function update(Request $request, $kelas_id, $id)
     {
         $validator = Validator::make($request->all(), [
-            'nama'         => 'required|string',
-            'nis'          => 'required|max:10|unique:students,nis,' . $id,
-            'jk'           => 'required|in:L,P',
-            'agama'        => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
-            'tgl_lahir'    => 'required|date',
-            'alamat'       => 'required|string',
-            'no_telp'      => 'nullable|string',
+            'nama' => 'required|string',
+            'nis' => 'required|max:10|unique:students,nis,'.$id,
+            'jk' => 'required|in:L,P',
+            'agama' => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
+            'tgl_lahir' => 'required|date',
+            'alamat' => 'required|string',
+            'no_telp' => 'nullable|string',
             'no_telp_ortu' => 'nullable|string',
         ]);
 
@@ -86,33 +86,36 @@ class StudentController extends Controller
     public function import(Request $request, $kelas_id)
     {
         $request->validate([
-            'file_siswa' => 'required|file|mimes:csv,txt'
+            'file_siswa' => 'required|file|mimes:csv,txt',
         ]);
 
-        $file   = $request->file('file_siswa');
-        $rows   = array_map('str_getcsv', file($file->getPathname()));
+        $file = $request->file('file_siswa');
+        $rows = array_map('str_getcsv', file($file->getPathname()));
         $header = array_shift($rows);
 
         $berhasil = 0;
-        $gagal    = 0;
+        $gagal = 0;
 
         foreach ($rows as $row) {
-            if (count($row) < count($header)) continue;
+            if (count($row) < count($header)) {
+                continue;
+            }
 
-            $data      = array_combine($header, $row);
+            $data = array_combine($header, $row);
             $validator = Validator::make($data, [
-                'nama'         => 'required|string',
-                'nis'          => 'required|max:10|unique:students,nis',
-                'jk'           => 'required|in:L,P',
-                'agama'        => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
-                'tgl_lahir'    => 'required|date',
-                'alamat'       => 'required|string',
-                'no_telp'      => 'nullable|string',
+                'nama' => 'required|string',
+                'nis' => 'required|max:10|unique:students,nis',
+                'jk' => 'required|in:L,P',
+                'agama' => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
+                'tgl_lahir' => 'required|date',
+                'alamat' => 'required|string',
+                'no_telp' => 'nullable|string',
                 'no_telp_ortu' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
                 $gagal++;
+
                 continue;
             }
 
@@ -133,40 +136,40 @@ class StudentController extends Controller
     public function moveStudent(Request $request, $kelas_id, $id)
     {
         $request->validate([
-            'action'           => 'required|in:pindah,lulus,keluar',
-            'to_classroom_id'  => 'required_if:action,pindah|nullable|exists:classrooms,id',
-            'keterangan'       => 'nullable|string|max:255',
+            'action' => 'required|in:pindah,lulus,keluar',
+            'to_classroom_id' => 'required_if:action,pindah|nullable|exists:classrooms,id',
+            'keterangan' => 'nullable|string|max:255',
         ]);
 
-        $student    = Student::findOrFail($id);
+        $student = Student::findOrFail($id);
         $activeYear = AcademicYear::where('is_active', true)->first();
-        $adminId    = Auth::id();
+        $adminId = Auth::id();
 
         DB::transaction(function () use ($request, $student, $activeYear, $adminId, $kelas_id) {
             $action = $request->action;
 
             if ($action === 'pindah') {
                 StudentClassHistory::create([
-                    'student_id'        => $student->id,
+                    'student_id' => $student->id,
                     'from_classroom_id' => $kelas_id,
-                    'to_classroom_id'   => $request->to_classroom_id,
-                    'academic_year_id'  => $activeYear?->id,
-                    'jenis'             => 'pindah',
-                    'keterangan'        => $request->keterangan,
-                    'processed_by'      => $adminId,
+                    'to_classroom_id' => $request->to_classroom_id,
+                    'academic_year_id' => $activeYear?->id,
+                    'jenis' => 'pindah',
+                    'keterangan' => $request->keterangan,
+                    'processed_by' => $adminId,
                 ]);
 
                 $student->update(['classroom_id' => $request->to_classroom_id]);
             } else {
                 // lulus atau keluar
                 StudentClassHistory::create([
-                    'student_id'        => $student->id,
+                    'student_id' => $student->id,
                     'from_classroom_id' => $kelas_id,
-                    'to_classroom_id'   => null,
-                    'academic_year_id'  => $activeYear?->id,
-                    'jenis'             => $action,
-                    'keterangan'        => $request->keterangan,
-                    'processed_by'      => $adminId,
+                    'to_classroom_id' => null,
+                    'academic_year_id' => $activeYear?->id,
+                    'jenis' => $action,
+                    'keterangan' => $request->keterangan,
+                    'processed_by' => $adminId,
                 ]);
 
                 $student->update(['status' => $action]);
