@@ -44,8 +44,8 @@ class DashboardController extends Controller
         $year = Carbon::now()->year;
 
         return $month >= 7
-            ? [$year.'-07-01', $year.'-12-31']
-            : [$year.'-01-01', $year.'-06-30'];
+            ? [$year . '-07-01', $year . '-12-31']
+            : [$year . '-01-01', $year . '-06-30'];
     }
 
     public function guruDashboard(Request $request)
@@ -71,7 +71,7 @@ class DashboardController extends Controller
         };
 
         // Stats absensi
-        $rawStats = AttendanceDetail::whereHas('attendance.schedule', fn ($q) => $q->where('teacher_id', $teacherId))
+        $rawStats = AttendanceDetail::whereHas('attendance.schedule', fn($q) => $q->where('teacher_id', $teacherId))
             ->whereHas('attendance', $attendanceFilter)
             ->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
@@ -91,7 +91,7 @@ class DashboardController extends Controller
         $persenColor = $persenGlobal >= 80 ? 'success' : ($persenGlobal >= 70 ? 'primary' : ($persenGlobal >= 60 ? 'warning' : 'danger'));
 
         // Siswa alpa tertinggi
-        $lowAttendanceStudents = AttendanceDetail::whereHas('attendance.schedule', fn ($q) => $q->where('teacher_id', $teacherId))
+        $lowAttendanceStudents = AttendanceDetail::whereHas('attendance.schedule', fn($q) => $q->where('teacher_id', $teacherId))
             ->whereIn('status', ['Alpa', 'Sakit', 'Izin'])
             ->whereHas('attendance', $attendanceFilter)
             ->select(
@@ -115,7 +115,7 @@ class DashboardController extends Controller
             ->join('attendance_details', 'attendance_details.attendance_id', '=', 'attendances.id')
             ->where('schedules.teacher_id', $teacherId)
             ->whereBetween('attendances.tanggal', [$startDate, $endDate])
-            ->when($selectedYear, fn ($q) => $q->where('attendances.academic_year_id', $selectedYear->id))
+            ->when($selectedYear, fn($q) => $q->where('attendances.academic_year_id', $selectedYear->id))
             ->selectRaw("
             classrooms.id as classroom_id,
             classrooms.tingkat,
@@ -226,7 +226,7 @@ class DashboardController extends Controller
         $teacherId = $this->getTeacherId();
 
         $classrooms = Classroom::where('walas_id', $teacherId)
-            ->orWhereHas('schedules', fn ($q) => $q->where('teacher_id', $teacherId))
+            ->orWhereHas('schedules', fn($q) => $q->where('teacher_id', $teacherId))
             ->orderBy('tingkat', 'asc')
             ->orderBy('paralel', 'asc')
             ->withCount('students')
@@ -237,9 +237,15 @@ class DashboardController extends Controller
 
     public function showClassroom($id)
     {
-        $classroom = Classroom::with(['students' => fn ($q) => $q->orderBy('nama', 'asc')])->findOrFail($id);
+        $classroom = Classroom::with(['students' => fn($q) => $q->orderBy('nama', 'asc')])->findOrFail($id);
 
-        return view('guru.kelas.show', compact('classroom'));
+        $teacherId = Auth::user()->teacher->id ?? \App\Models\Teacher::where('user_id', Auth::id())->value('id');
+
+        $schedule = Schedule::where('classroom_id', $classroom->id)
+            ->where('teacher_id', $teacherId)
+            ->first();
+
+        return view('guru.kelas.show', compact('classroom', 'schedule'));
     }
 
     public function penilaianIndex()

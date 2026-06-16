@@ -11,6 +11,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController as DashboardGuru;
 use App\Http\Controllers\EvaluationController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -72,6 +73,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/evaluations/trash', [EvaluationController::class, 'trash'])->name('evaluations.trash');
         Route::post('/evaluations/{id}/restore', [EvaluationController::class, 'restore'])->name('evaluations.restore');
         Route::delete('/evaluations/{id}/force-delete', [EvaluationController::class, 'forceDeleteEvaluation'])->name('evaluations.force-delete');
+
+        // Export
+        Route::get('/export/rekap/{schedule_id}', [ExportController::class, 'rekapNilai'])->name('export.rekap');
+
 
         // 1. Rute kustom untuk create dengan parameter schedule_id tetap di sini
         Route::get('/evaluations/create/{schedule_id}', [EvaluationController::class, 'create'])->name('evaluations.create');

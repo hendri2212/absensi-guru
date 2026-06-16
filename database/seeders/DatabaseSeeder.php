@@ -168,11 +168,11 @@ class DatabaseSeeder extends Seeder
 
             $generateNip = function (Carbon $tglLahir, string $jk, int $urut) use (&$nipUsed): string {
                 $jkDigit = $jk === 'L' ? '1' : '2';
-                $nip = substr($tglLahir->format('Ymd').$jkDigit.str_pad($urut, 6, '0', STR_PAD_LEFT), 0, 18);
+                $nip = substr($tglLahir->format('Ymd') . $jkDigit . str_pad($urut, 6, '0', STR_PAD_LEFT), 0, 18);
 
                 while (in_array($nip, $nipUsed)) {
                     $urut++;
-                    $nip = substr($tglLahir->format('Ymd').$jkDigit.str_pad($urut, 6, '0', STR_PAD_LEFT), 0, 18);
+                    $nip = substr($tglLahir->format('Ymd') . $jkDigit . str_pad($urut, 6, '0', STR_PAD_LEFT), 0, 18);
                 }
 
                 $nipUsed[] = $nip;
@@ -217,8 +217,8 @@ class DatabaseSeeder extends Seeder
                         'jk' => $tt['jk'],
                         'agama' => $tt['agama'],
                         'tgl_lahir' => $tgl->toDateString(),
-                        'alamat' => 'Jl. Guru No. '.($idx + 1),
-                        'no_telp' => '0812345678'.str_pad($idx, 2, '0', STR_PAD_LEFT),
+                        'alamat' => 'Jl. Guru No. ' . ($idx + 1),
+                        'no_telp' => '0812345678' . str_pad($idx, 2, '0', STR_PAD_LEFT),
                         'school_id' => 1,
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -229,13 +229,13 @@ class DatabaseSeeder extends Seeder
             // --- 17 guru random (guru01–guru17) ---
             for ($i = 1; $i <= 17; $i++) {
                 $jk = $i % 2 === 0 ? 'L' : 'P';
-                $username = 'guru'.str_pad($i, 2, '0', STR_PAD_LEFT);
+                $username = 'guru' . str_pad($i, 2, '0', STR_PAD_LEFT);
 
                 $namaDepan = $jk === 'L'
                     ? $namaDepanLaki[array_rand($namaDepanLaki)]
                     : $namaDepanPerempuan[array_rand($namaDepanPerempuan)];
 
-                $namaGuru = $namaDepan.' '.$namaBelakang[array_rand($namaBelakang)].', '.$gelar[array_rand($gelar)];
+                $namaGuru = $namaDepan . ' ' . $namaBelakang[array_rand($namaBelakang)] . ', ' . $gelar[array_rand($gelar)];
 
                 $user = DB::table('users')->where('username', $username)->first();
 
@@ -264,8 +264,8 @@ class DatabaseSeeder extends Seeder
                         'jk' => $jk,
                         'agama' => $agamaList[array_rand($agamaList)],
                         'tgl_lahir' => $tgl->toDateString(),
-                        'alamat' => 'Jl. Guru No. '.rand(1, 200),
-                        'no_telp' => '08'.rand(100000000, 999999999),
+                        'alamat' => 'Jl. Guru No. ' . rand(1, 200),
+                        'no_telp' => '08' . rand(100000000, 999999999),
                         'school_id' => 1,
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -367,17 +367,17 @@ class DatabaseSeeder extends Seeder
                         : $namaDepanPerempuan[array_rand($namaDepanPerempuan)];
 
                     $nisCounter++;
-                    $nis = '2025'.str_pad($nisCounter, 4, '0', STR_PAD_LEFT);
+                    $nis = '2025' . str_pad($nisCounter, 4, '0', STR_PAD_LEFT);
 
                     $studentBatch[] = [
-                        'nama' => $namaDepan.' '.$namaBelakang[array_rand($namaBelakang)],
+                        'nama' => $namaDepan . ' ' . $namaBelakang[array_rand($namaBelakang)],
                         'nis' => $nis,
                         'jk' => $jk,
                         'agama' => $agamaSiswa[array_rand($agamaSiswa)],
                         'tgl_lahir' => Carbon::create(rand(2010, 2012), rand(1, 12), rand(1, 28))->toDateString(),
-                        'alamat' => 'Jl. Siswa No. '.rand(1, 100),
-                        'no_telp' => '08'.rand(100000000, 999999999),
-                        'no_telp_ortu' => '08'.rand(100000000, 999999999),
+                        'alamat' => 'Jl. Siswa No. ' . rand(1, 100),
+                        'no_telp' => '08' . rand(100000000, 999999999),
+                        'no_telp_ortu' => '08' . rand(100000000, 999999999),
                         'classroom_id' => $classroomId,
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -396,6 +396,10 @@ class DatabaseSeeder extends Seeder
             /*
             |--------------------------------------------------------------------------
             | 8. SCHEDULES — hanya untuk tahun ajaran aktif & kelas VII
+            |
+            | Strategi distribusi mapel:
+            | - Setiap kelas punya 1 guru tetap per mata pelajaran (guru_mapel_map)
+            | - Setiap mapel dijadwalkan 2–3x per minggu di slot yang berbeda
             | - Anti-bentrok: 1 guru tidak bisa ngajar di 2 kelas di hari+jam yang sama
             |--------------------------------------------------------------------------
             */
@@ -409,53 +413,94 @@ class DatabaseSeeder extends Seeder
                 ['jam_mulai' => '13:00', 'jam_habis' => '14:30'],
             ];
 
-            $scheduleIds = [];
-            $teacherSlotUsed = [];
+            // Total slot per minggu per kelas: 6 hari × 4 jam = 24 slot
+            // 10 mapel × 2 pertemuan = 20 slot (sisanya kosong, realistis)
 
-            // Hanya seed jadwal untuk tahun ajaran aktif
+            $scheduleIds = [];
+            $teacherSlotUsed = []; // key: "{teacherId}_{activeYearId}_{hari}_{jam_mulai}"
+
+            // Assign 1 guru tetap per mapel secara global (bukan per kelas)
+            // 10 mapel → 10 guru pertama; 10 guru sisanya tidak mengajar (staf/BK/dll)
+            $shuffledTeachers = $teacherIds;
+            shuffle($shuffledTeachers);
+
+            $guruMapel = []; // subjectId => teacherId (global, sama untuk semua kelas)
+            foreach ($subjectIds as $sIdx => $subjectId) {
+                $guruMapel[$subjectId] = $shuffledTeachers[$sIdx];
+            }
+
             foreach ($classroomIds as $classroomId) {
                 $scheduleIds[$classroomId] = [];
 
+                // Buat pool slot yang tersedia (hari × jam), lalu acak urutannya
+                $allSlots = [];
                 foreach ($hariList as $hari) {
                     foreach ($jamList as $jam) {
+                        $allSlots[] = ['hari' => $hari, 'jam' => $jam];
+                    }
+                }
+                shuffle($allSlots);
 
-                        // 20% slot kosong (realistis)
-                        if (rand(1, 100) <= 20) {
+                // Setiap mapel dijadwalkan 2x per minggu
+                $pertemuanPerMapel = 2;
+                $mapelQueue = [];
+                foreach ($subjectIds as $subjectId) {
+                    for ($p = 0; $p < $pertemuanPerMapel; $p++) {
+                        $mapelQueue[] = $subjectId;
+                    }
+                }
+                shuffle($mapelQueue); // acak urutan penempatan
+
+                $slotIndex = 0;
+
+                foreach ($mapelQueue as $subjectId) {
+                    $assigned = false;
+
+                    // Cari slot yang tidak bentrok untuk guru ini
+                    $attempts = 0;
+                    while ($slotIndex < count($allSlots) && $attempts < count($allSlots)) {
+                        $slot = $allSlots[$slotIndex % count($allSlots)];
+                        $teacherId = $guruMapel[$subjectId];
+                        $slotKey = "{$teacherId}_{$activeYear->id}_{$slot['hari']}_{$slot['jam']['jam_mulai']}";
+
+                        $slotIndex++;
+                        $attempts++;
+
+                        if (isset($teacherSlotUsed[$slotKey])) {
+                            continue; // guru bentrok, coba slot berikutnya
+                        }
+
+                        // Cek juga apakah slot ini di kelas ini sudah terisi mapel lain
+                        $classroomSlotKey = "{$classroomId}_{$slot['hari']}_{$slot['jam']['jam_mulai']}";
+                        if (isset($teacherSlotUsed[$classroomSlotKey])) {
                             continue;
                         }
 
-                        // Pilih guru yang belum ngajar di slot ini
-                        $shuffledTeachers = $teacherIds;
-                        shuffle($shuffledTeachers);
-                        $assignedTeacher = null;
-
-                        foreach ($shuffledTeachers as $tid) {
-                            $slotKey = "{$tid}_{$activeYear->id}_{$hari}_{$jam['jam_mulai']}";
-                            if (! isset($teacherSlotUsed[$slotKey])) {
-                                $assignedTeacher = $tid;
-                                $teacherSlotUsed[$slotKey] = true;
-                                break;
-                            }
-                        }
-
-                        if (! $assignedTeacher) {
-                            continue;
-                        }
+                        // Slot aman, insert jadwal
+                        $teacherSlotUsed[$slotKey] = true;
+                        $teacherSlotUsed[$classroomSlotKey] = true;
 
                         $scheduleId = DB::table('schedules')->insertGetId([
                             'academic_year_id' => $activeYear->id,
                             'semester' => $activeYear->semester,
-                            'teacher_id' => $assignedTeacher,
-                            'subject_id' => $subjectIds[array_rand($subjectIds)],
+                            'teacher_id' => $teacherId,
+                            'subject_id' => $subjectId,
                             'classroom_id' => $classroomId,
-                            'hari' => $hari,
-                            'jam_mulai' => $jam['jam_mulai'],
-                            'jam_habis' => $jam['jam_habis'],
+                            'hari' => $slot['hari'],
+                            'jam_mulai' => $slot['jam']['jam_mulai'],
+                            'jam_habis' => $slot['jam']['jam_habis'],
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
 
                         $scheduleIds[$classroomId][] = $scheduleId;
+                        $assigned = true;
+                        break;
+                    }
+
+                    // Jika tidak ada slot kosong yang tidak bentrok, skip mapel ini
+                    if (! $assigned) {
+                        $this->command->warn("  ⚠ Slot penuh untuk classroom {$classroomId}, subject {$subjectId} dilewati.");
                     }
                 }
             }
@@ -479,12 +524,12 @@ class DatabaseSeeder extends Seeder
             ];
 
             $hariToDay = [
-                'Senin' => Carbon::MONDAY,
+                'Senin'  => Carbon::MONDAY,
                 'Selasa' => Carbon::TUESDAY,
-                'Rabu' => Carbon::WEDNESDAY,
-                'Kamis' => Carbon::THURSDAY,
-                'Jumat' => Carbon::FRIDAY,
-                'Sabtu' => Carbon::SATURDAY,
+                'Rabu'   => Carbon::WEDNESDAY,
+                'Kamis'  => Carbon::THURSDAY,
+                'Jumat'  => Carbon::FRIDAY,
+                'Sabtu'  => Carbon::SATURDAY,
             ];
 
             $today = Carbon::today();
@@ -495,7 +540,7 @@ class DatabaseSeeder extends Seeder
 
                     for ($week = 0; $week < 8; $week++) {
                         if (rand(1, 100) <= 15) {
-                            continue;
+                            continue; // 15% kemungkinan pertemuan libur/batal
                         }
 
                         $tanggal = $today->copy()
@@ -535,6 +580,8 @@ class DatabaseSeeder extends Seeder
             /*
             |--------------------------------------------------------------------------
             | 10. EVALUATIONS
+            | - Dibuat per schedule (bukan per subject global)
+            | - Setiap jadwal punya semua jenis evaluasi → nilai siswa beragam per mapel
             |--------------------------------------------------------------------------
             */
 
@@ -553,7 +600,7 @@ class DatabaseSeeder extends Seeder
                             'academic_year_id' => $schedule->academic_year_id,
                             'semester' => $schedule->semester,
                             'jenis' => $jenis,
-                            'nama_penilaian' => $jenis.' '.rand(1, 3),
+                            'nama_penilaian' => $jenis . ' ' . rand(1, 3),
                             'tanggal' => now()->subDays(rand(1, 120))->toDateString(),
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -563,17 +610,17 @@ class DatabaseSeeder extends Seeder
                         foreach ($studentIds[$classroomId] as $studentId) {
                             $roll = rand(1, 100);
                             $nilai = match (true) {
-                                $roll <= 10 => rand(40, 59),
-                                $roll <= 80 => rand(60, 85),
-                                default => rand(86, 100),
+                                $roll <= 10  => rand(40, 59),
+                                $roll <= 80  => rand(60, 85),
+                                default      => rand(86, 100),
                             };
 
                             $details[] = [
                                 'evaluation_id' => $evaluationId,
-                                'student_id' => $studentId,
-                                'nilai' => $nilai,
-                                'created_at' => now(),
-                                'updated_at' => now(),
+                                'student_id'    => $studentId,
+                                'nilai'         => $nilai,
+                                'created_at'    => now(),
+                                'updated_at'    => now(),
                             ];
                         }
 
@@ -594,6 +641,8 @@ class DatabaseSeeder extends Seeder
             $this->command->info('=== DATA YANG DI-SEED ===');
             $this->command->info('Kelas    : VII A – VII H (8 kelas, 25 siswa/kelas = 200 siswa)');
             $this->command->info('Guru     : 20 guru (3 testing + 17 random)');
+            $this->command->info('Mapel    : 10 mata pelajaran, masing-masing 2x/minggu per kelas (1 guru = 1 mapel global)');
+            $this->command->info('Staf/BK  : 10 guru sisanya tidak punya jadwal mengajar');
             $this->command->info('Jadwal   : Hanya kelas VII, tahun ajaran aktif (2025/2026 Genap)');
             $this->command->info('');
             $this->command->info('=== YANG BISA DITES MANUAL ===');

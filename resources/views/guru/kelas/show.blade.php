@@ -16,6 +16,11 @@
                         <h5 class="fw-bold mb-1 text-white">Kelas {{ $classroom->tingkat }}-{{ $classroom->paralel }}</h5>
                         <p class="mb-0 text-white opacity-75 small">{{ $classroom->students->count() }} Siswa terdaftar</p>
                     </div>
+                    @if ($schedule)
+                        <a href="{{ route('guru.export.rekap', $schedule->id) }}" class="btn btn-success btn-sm ms-auto">
+                            <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
