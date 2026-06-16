@@ -17,8 +17,8 @@
                         <p class="mb-0 text-white opacity-75 small">
                             Tentukan tujuan tiap kelas, lalu preview sebelum dieksekusi
                             @if ($activeYear)
-                                &mdash; Tahun Ajaran Aktif: <strong>{{ $activeYear->tahun }}
-                                    {{ $activeYear->semester }}</strong>
+                                &mdash; Tahun Ajaran Aktif:
+                                <strong>{{ $activeYear->tahun }} {{ $activeYear->semester }}</strong>
                             @endif
                         </p>
                     </div>
@@ -42,13 +42,14 @@
                         <i class="bi bi-arrow-up-circle text-primary me-2"></i>
                         Mapping Kenaikan Kelas
                     </h6>
-                    <small class="text-muted">Pilih tujuan untuk setiap kelas. Biarkan kosong untuk melewati kelas
-                        tersebut.</small>
+                    <small class="text-muted">
+                        Pilih tujuan untuk setiap kelas. Biarkan kosong untuk melewati kelas tersebut.
+                    </small>
                 </div>
 
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table align-middle mb-0" id="tabelMapping">
+                        <table class="table align-middle mb-0">
                             <thead class="bg-light">
                                 <tr>
                                     <th class="ps-4 py-3 border-0 text-muted small fw-bold" style="width:30%">KELAS ASAL
@@ -61,40 +62,45 @@
                             </thead>
                             <tbody>
                                 @forelse ($classes as $kelas)
-                                    @php $jumlah = $kelas->students_count; @endphp
-                                    <tr class="{{ $jumlah == 0 ? 'opacity-50' : '' }}">
+                                    <tr class="{{ $kelas->students_count == 0 ? 'opacity-50' : '' }}">
                                         <td class="ps-4">
                                             <div class="fw-semibold">
                                                 Kelas {{ $kelas->tingkat }}-{{ $kelas->paralel }}
                                             </div>
-                                            @if ($jumlah == 0)
+                                            @if ($kelas->students_count == 0)
                                                 <small class="text-muted">Tidak ada siswa aktif</small>
                                             @endif
                                         </td>
                                         <td>
                                             <span class="badge bg-primary-subtle text-primary px-2 py-1">
-                                                {{ $jumlah }} siswa
+                                                {{ $kelas->students_count }} siswa
                                             </span>
                                         </td>
                                         <td class="text-center text-muted">
                                             <i class="bi bi-arrow-right"></i>
                                         </td>
                                         <td class="pe-4">
-                                            <select name="mapping[{{ $kelas->id }}]"
-                                                class="form-select form-select-sm select-normal"
-                                                style="min-width: 200px; color: #212529;"
-                                                {{ $jumlah == 0 ? 'disabled' : '' }}>
-                                                <option value="" style="color:#212529;">— Lewati —</option>
-                                                <option value="lulus" style="color:#198754; font-weight:600;">
-                                                    🎓 Lulus (tidak pindah ke kelas manapun)
-                                                </option>
-                                                @foreach ($classes as $tujuan)
-                                                    @if ($tujuan->id !== $kelas->id)
-                                                        <option value="{{ $tujuan->id }}" style="color:#212529;">
+                                            <select name="mapping[{{ $kelas->id }}]" class="form-select form-select-sm"
+                                                style="min-width: 200px; color: #212529; background-color: #fff;"
+                                                {{ $kelas->students_count == 0 ? 'disabled' : '' }}>
+
+                                                <option value="" style="color: #212529;">— Lewati —</option>
+
+                                                @if ($allowedTargets[$kelas->id] === 'lulus')
+                                                    <option value="lulus" style="color:#198754; font-weight:600;">
+                                                        🎓 Lulus (tidak pindah ke kelas manapun)
+                                                    </option>
+                                                @elseif ($allowedTargets[$kelas->id] instanceof \Illuminate\Support\Collection)
+                                                    @foreach ($allowedTargets[$kelas->id] as $tujuan)
+                                                        <option value="{{ $tujuan->id }}" style="color: #212529;">
                                                             Kelas {{ $tujuan->tingkat }}-{{ $tujuan->paralel }}
                                                         </option>
-                                                    @endif
-                                                @endforeach
+                                                    @endforeach
+                                                @else
+                                                    <option disabled style="color: #6c757d;">Tidak ada tujuan tersedia
+                                                    </option>
+                                                @endif
+
                                             </select>
                                         </td>
                                     </tr>

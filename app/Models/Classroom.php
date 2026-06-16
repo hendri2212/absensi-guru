@@ -25,7 +25,7 @@ class Classroom extends Model
 
     public function getNamaKelasAttribute(): string
     {
-        return $this->tingkat.' '.$this->paralel;
+        return $this->tingkat . ' ' . $this->paralel;
     }
 
     public function schedules(): HasMany
@@ -35,6 +35,6 @@ class Classroom extends Model
 
     public function students(): HasMany
     {
-        return $this->hasMany(Student::class, 'classroom_id');
+        return $this->hasMany(Student::class)->where('status', 'aktif');
     }
 }

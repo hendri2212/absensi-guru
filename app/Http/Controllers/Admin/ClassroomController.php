@@ -41,7 +41,7 @@ class ClassroomController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->back()->with('success', 'Kelas '.$data['tingkat'].'-'.$data['paralel'].' berhasil dibuat.');
+        return redirect()->back()->with('success', 'Kelas ' . $data['tingkat'] . '-' . $data['paralel'] . ' berhasil dibuat.');
     }
 
     public function import(Request $request, $kelas_id)
@@ -115,126 +115,174 @@ class ClassroomController extends Controller
         return redirect()->back()->with('success', 'Kelas berhasil dihapus');
     }
 
-    // ══════════════════════════════════════════════════
-    // KENAIKAN KELAS
-    // ══════════════════════════════════════════════════
+    private function tujuanValidUntukTingkat(string $tingkat): string|null
+    {
+        return match ($tingkat) {
+            'VII'  => 'VIII',
+            'VIII' => 'IX',
+            'IX'   => 'lulus',
+            default => null,
+        };
+    }
 
     /**
-     * Halaman kenaikan kelas — preview mapping tiap kelas ke tujuan
+     * Validasi mapping: pastikan setiap from_classroom punya tujuan yang sesuai tingkatnya
      */
+    private function validateMapping(array $mapping, \Illuminate\Database\Eloquent\Collection $classes): array
+    {
+        $errors = [];
+
+        foreach ($mapping as $fromId => $toValue) {
+            if (! $toValue) continue;
+
+            $from = $classes->get($fromId);
+            if (! $from) continue;
+
+            $tujuanValid = $this->tujuanValidUntukTingkat($from->tingkat);
+
+            if ($tujuanValid === 'lulus') {
+                if ($toValue !== 'lulus') {
+                    $errors[] = "Kelas {$from->tingkat}-{$from->paralel} hanya bisa → Lulus.";
+                }
+            } elseif ($tujuanValid !== null) {
+                // toValue harus berupa ID kelas dengan tingkat yang sesuai
+                $toKelas = $classes->get($toValue);
+                if (! $toKelas || $toKelas->tingkat !== $tujuanValid) {
+                    $errors[] = "Kelas {$from->tingkat}-{$from->paralel} hanya bisa pindah ke tingkat {$tujuanValid}.";
+                }
+            } else {
+                $errors[] = "Tingkat {$from->tingkat} tidak dikenali untuk kenaikan kelas.";
+            }
+        }
+
+        return $errors;
+    }
+
     public function promoteIndex()
     {
-        $classes = Classroom::withCount(['students' => fn ($q) => $q->where('status', 'aktif')])
+        $classes = Classroom::withCount(['students' => fn($q) => $q->where('status', 'aktif')])
             ->orderBy('tingkat')
             ->orderBy('paralel')
             ->get();
 
         $activeYear = AcademicYear::where('is_active', true)->first();
 
-        return view('admin.kelas.promote', compact('classes', 'activeYear'));
+        // Kelas tujuan yang valid per tingkat
+        $tingkatMap = ['VII' => 'VIII', 'VIII' => 'IX'];
+
+        $classesGrouped = $classes->groupBy('tingkat');
+
+        // [classroom_id => Collection of target classrooms | 'lulus' | null]
+        $allowedTargets = $classes->mapWithKeys(function ($kelas) use ($tingkatMap, $classesGrouped) {
+            $targetTingkat = $tingkatMap[$kelas->tingkat] ?? null;
+
+            return [
+                $kelas->id => $targetTingkat
+                    ? $classesGrouped->get($targetTingkat, collect())
+                    : ($kelas->tingkat === 'IX' ? 'lulus' : null),
+            ];
+        });
+
+        return view('admin.kelas.promote', compact('classes', 'activeYear', 'allowedTargets'));
     }
 
-    /**
-     * Preview hasil mapping sebelum dieksekusi
-     * POST — kirim array mapping: [from_classroom_id => to_classroom_id | 'lulus']
-     */
     public function promotePreview(Request $request)
     {
         $request->validate([
-            'mapping' => 'required|array',
-            'mapping.*' => 'nullable|string', // bisa id kelas atau 'lulus'
+            'mapping'      => 'required|array',
+            'mapping.*'    => 'nullable|string',
+            'tidak_naik'   => 'nullable|array',
+            'tidak_naik.*' => 'integer',
         ]);
 
-        $classes = Classroom::withCount(['students' => fn ($q) => $q->where('status', 'aktif')])->get()->keyBy('id');
-        $allClasses = Classroom::orderBy('tingkat')->orderBy('paralel')->get();
+        $classes    = Classroom::withCount(['students' => fn($q) => $q->where('status', 'aktif')])->get()->keyBy('id');
         $activeYear = AcademicYear::where('is_active', true)->first();
+        $tidakNaik  = $request->input('tidak_naik', []);
+
+        $errors = $this->validateMapping($request->mapping, $classes);
+        if (! empty($errors)) {
+            return redirect()->back()->withErrors($errors)->withInput();
+        }
 
         $preview = [];
         foreach ($request->mapping as $fromId => $toValue) {
-            // Lewati jika tidak dipilih
-            if (! $toValue) {
-                continue;
-            }
+            if (! $toValue) continue;
 
             $from = $classes->get($fromId);
-            if (! $from) {
-                continue;
-            }
+            if (! $from) continue;
 
-            $students = Student::where('classroom_id', $fromId)->where('status', 'aktif')->get();
-            if ($students->isEmpty()) {
-                continue;
-            }
+            $allStudents = Student::where('classroom_id', $fromId)->where('status', 'aktif')->get();
+            if ($allStudents->isEmpty()) continue;
 
             $isLulus = $toValue === 'lulus';
             $toKelas = (! $isLulus) ? $classes->get($toValue) : null;
 
-            // Jika bukan lulus tapi kelas tujuan tidak ditemukan, skip
-            if (! $isLulus && ! $toKelas) {
-                continue;
-            }
-
             $preview[] = [
-                'from' => $from,
-                'to_value' => $toValue,
-                'to' => $toKelas,
-                'lulus' => $isLulus,
-                'students' => $students,
+                'from'         => $from,
+                'to_value'     => $toValue,
+                'to'           => $toKelas,
+                'lulus'        => $isLulus,
+                'students'     => $allStudents->whereNotIn('id', $tidakNaik)->values(),
+                'dikecualikan' => $allStudents->whereIn('id', $tidakNaik)->values(),
             ];
         }
 
-        return view('admin.kelas.promote-preview', compact('preview', 'allClasses', 'activeYear'));
+        return view('admin.kelas.promote-preview', compact('preview', 'activeYear'));
     }
 
-    /**
-     * Eksekusi kenaikan kelas massal
-     */
     public function promoteExecute(Request $request)
     {
         $request->validate([
-            'mapping' => 'required|array',
-            'mapping.*' => 'nullable|string',
+            'mapping'      => 'required|array',
+            'mapping.*'    => 'nullable|string',
+            'tidak_naik'   => 'nullable|array',
+            'tidak_naik.*' => 'integer',
         ]);
 
+        $classes    = Classroom::all()->keyBy('id');
         $activeYear = AcademicYear::where('is_active', true)->first();
-        $adminId = Auth::id();
+        $adminId    = Auth::id();
+        $tidakNaik  = $request->input('tidak_naik', []);
 
-        DB::transaction(function () use ($request, $activeYear, $adminId) {
+        $errors = $this->validateMapping($request->mapping, $classes);
+        if (! empty($errors)) {
+            return redirect()->back()->withErrors($errors)->withInput();
+        }
+
+        DB::transaction(function () use ($request, $activeYear, $adminId, $tidakNaik) {
             foreach ($request->mapping as $fromId => $toValue) {
-                if (! $toValue) {
-                    continue;
-                } // skip = tidak diproses
+                if (! $toValue) continue;
 
                 $students = Student::where('classroom_id', $fromId)
                     ->where('status', 'aktif')
+                    ->whereNotIn('id', $tidakNaik) // ← skip yang dikecualikan
                     ->get();
 
                 foreach ($students as $student) {
                     if ($toValue === 'lulus') {
-                        // Catat history lulus
                         StudentClassHistory::create([
-                            'student_id' => $student->id,
+                            'student_id'        => $student->id,
                             'from_classroom_id' => $fromId,
-                            'to_classroom_id' => null,
-                            'academic_year_id' => $activeYear?->id,
-                            'jenis' => 'lulus',
-                            'keterangan' => 'Proses kenaikan kelas massal',
-                            'processed_by' => $adminId,
+                            'to_classroom_id'   => null,
+                            'academic_year_id'  => $activeYear?->id,
+                            'jenis'             => 'lulus',
+                            'keterangan'        => 'Proses kenaikan kelas massal',
+                            'processed_by'      => $adminId,
                         ]);
-
-                        $student->update(['status' => 'lulus']);
+                        $student->update([
+                            'status'       => 'lulus',
+                            'classroom_id' => null, // ← ini yang kurang
+                        ]);
                     } else {
-                        // Pindah ke kelas tujuan
                         StudentClassHistory::create([
-                            'student_id' => $student->id,
+                            'student_id'        => $student->id,
                             'from_classroom_id' => $fromId,
-                            'to_classroom_id' => $toValue,
-                            'academic_year_id' => $activeYear?->id,
-                            'jenis' => 'naik_kelas',
-                            'keterangan' => 'Proses kenaikan kelas massal',
-                            'processed_by' => $adminId,
+                            'to_classroom_id'   => $toValue,
+                            'academic_year_id'  => $activeYear?->id,
+                            'jenis'             => 'naik_kelas',
+                            'keterangan'        => 'Proses kenaikan kelas massal',
+                            'processed_by'      => $adminId,
                         ]);
-
                         $student->update(['classroom_id' => $toValue]);
                     }
                 }

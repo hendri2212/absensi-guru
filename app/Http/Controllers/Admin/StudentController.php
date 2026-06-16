@@ -18,6 +18,7 @@ class StudentController extends Controller
     {
         $kelas = Classroom::findOrFail($kelas_id);
         $students = Student::where('classroom_id', $kelas_id)
+            ->where('status', 'aktif')
             ->orderBy('nama', 'asc')
             ->paginate(20);
 
@@ -52,7 +53,7 @@ class StudentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nama' => 'required|string',
-            'nis' => 'required|max:10|unique:students,nis,'.$id,
+            'nis' => 'required|max:10|unique:students,nis,' . $id,
             'jk' => 'required|in:L,P',
             'agama' => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
             'tgl_lahir' => 'required|date',
