@@ -68,23 +68,23 @@
                                     </td>
                                     <td class="text-center pe-4">
                                         <div class="d-flex justify-content-center gap-1">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
                                                 data-bs-toggle="modal" data-bs-target="#detailModal{{ $teacher->id }}"
                                                 title="Lihat Detail">
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                             <a href="{{ route('admin.guru.edit', $teacher->id) }}"
-                                                class="btn btn-sm btn-outline-secondary" title="Edit">
+                                                class="btn btn-sm btn-outline-warning" title="Edit">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                             <form action="{{ route('admin.guru.destroy', $teacher->id) }}" method="POST"
                                                 class="d-inline" id="form-hapus-{{ $teacher->id }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" class="btn btn-sm btn-outline-secondary btn-hapus"
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-hapus"
                                                     data-id="{{ $teacher->id }}" data-nama="{{ $teacher->nama_guru }}"
                                                     title="Hapus">
-                                                    <i class="bi bi-trash text-danger"></i>
+                                                    <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -121,22 +121,22 @@
                                 </div>
                             </div>
                             <div class="d-flex gap-1 flex-shrink-0">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                     data-bs-target="#detailModal{{ $teacher->id }}" title="Lihat Detail">
                                     <i class="bi bi-eye"></i>
                                 </button>
                                 <a href="{{ route('admin.guru.edit', $teacher->id) }}"
-                                    class="btn btn-sm btn-outline-secondary" title="Edit">
-                                    <i class="bi bi-pencil"></i>
+                                    class="btn btn-sm btn-outline-warning" title="Edit">
+                                    <i class="bi bi-pencil text-warning"></i>
                                 </a>
                                 <form action="{{ route('admin.guru.destroy', $teacher->id) }}" method="POST"
                                     class="d-inline" id="form-hapus-{{ $teacher->id }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-hapus"
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-hapus"
                                         data-id="{{ $teacher->id }}" data-nama="{{ $teacher->nama_guru }}"
                                         title="Hapus">
-                                        <i class="bi bi-trash text-danger"></i>
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
                             </div>

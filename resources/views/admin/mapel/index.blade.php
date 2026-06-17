@@ -38,7 +38,7 @@
                                                 <div class="d-flex justify-content-center gap-1">
                                                     <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
                                                         data-bs-target="#modalEditMapel{{ $s->id }}" title="Edit">
-                                                        <i class="bi bi-pencil"></i>
+                                                        <i class="bi bi-pencil text-warning"></i>
                                                     </button>
                                                     <form action="{{ route('admin.mapel.destroy', $s->id) }}" method="POST"
                                                         class="d-inline">

@@ -60,18 +60,22 @@
                                     <td class="text-center pe-4">
                                         <div class="d-flex justify-content-center gap-1">
                                             <a href="{{ route('admin.kelas.students.index', $item->id) }}"
-                                                class="btn btn-sm btn-outline-secondary" title="Kelola Siswa">
-                                                <i class="bi bi-people-fill text-primary"></i>
+                                                class="btn btn-sm btn-outline-primary" title="Kelola Siswa">
+                                                <i class="bi bi-people-fill"></i>
                                             </a>
+                                            <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
+                                                data-bs-target="#modalEditKelas{{ $item->id }}" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
                                             <form action="{{ route('admin.kelas.destroy', $item->id) }}" method="POST"
                                                 class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" class="btn btn-sm btn-outline-secondary btn-hapus"
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-hapus"
                                                     data-id="{{ $item->id }}"
                                                     data-nama="Kelas {{ $item->tingkat }} {{ $item->paralel }}"
                                                     title="Hapus">
-                                                    <i class="bi bi-trash text-danger"></i>
+                                                    <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -147,6 +151,62 @@
             </form>
         </div>
     </div>
+
+    {{-- Modal Edit Kelas --}}
+    @foreach ($classes as $item)
+        <div class="modal fade" id="modalEditKelas{{ $item->id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+                <form action="{{ route('admin.kelas.update', $item->id) }}" method="POST"
+                    class="modal-content border-0 rounded-4 shadow-lg">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header border-0 pb-0 pt-4 px-4">
+                        <h6 class="fw-bold mb-0 text-primary">Edit Kelas</h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body px-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Tingkat</label>
+                            <select name="tingkat" class="form-select" required>
+                                <option value="VII" {{ $item->tingkat === 'VII' ? 'selected' : '' }}>VII</option>
+                                <option value="VIII" {{ $item->tingkat === 'VIII' ? 'selected' : '' }}>VIII</option>
+                                <option value="IX" {{ $item->tingkat === 'IX' ? 'selected' : '' }}>IX</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Paralel / Nama Kelas</label>
+                            <select name="paralel" class="form-select" required>
+                                @foreach (range('A', 'H') as $char)
+                                    <option value="{{ $char }}" {{ $item->paralel === $char ? 'selected' : '' }}>
+                                        {{ $char }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label fw-semibold small">Wali Kelas</label>
+                            <select name="walas_id" class="form-select" required>
+                                <option value="" disabled>-- Pilih Guru --</option>
+                                @foreach ($teachers as $teacher)
+                                    <option value="{{ $teacher->id }}"
+                                        {{ $item->walas_id == $teacher->id ? 'selected' : '' }}>
+                                        {{ $teacher->nama_guru }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                            data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-save me-1"></i>Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endforeach
 
 @endsection
 
