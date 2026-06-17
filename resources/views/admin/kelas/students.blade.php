@@ -41,10 +41,9 @@
                         </div>
                     </div>
                     <div class="d-flex gap-2 flex-shrink-0">
-                        <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal"
-                            data-bs-target="#modalImportSiswa">
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalImportSiswa">
                             <i class="bi bi-file-earmark-excel me-1"></i>
-                            <span class="d-none d-md-inline">Import CSV</span>
+                            <span class="d-none d-md-inline">Import xlsx</span>
                         </button>
                         <button class="btn btn-light btn-sm fw-semibold" data-bs-toggle="modal"
                             data-bs-target="#modalTambahSiswa">
@@ -91,24 +90,24 @@
                                     </td>
                                     <td class="text-center pe-4">
                                         <div class="d-flex justify-content-center gap-1">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#modalDetailSiswa{{ $s->id }}" title="Detail">
-                                                <i class="bi bi-eye text-secondary"></i>
+                                                <i class="bi bi-eye"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                            <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
                                                 data-bs-target="#modalEditSiswa{{ $s->id }}" title="Edit">
-                                                <i class="bi bi-pencil text-primary"></i>
+                                                <i class="bi bi-pencil"></i>
                                             </button>
                                             <form
                                                 action="{{ route('admin.kelas.students.destroy', [$kelas->id, $s->id]) }}"
                                                 method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" class="btn btn-sm btn-outline-secondary btn-hapus"
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-hapus"
                                                     data-id="{{ $s->id }}" data-nama="{{ $s->nama }}"
                                                     title="Hapus">
-                                                    <i class="bi bi-trash text-danger"></i>
+                                                    <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -156,21 +155,21 @@
                                 </div>
                             </div>
                             <div class="d-flex gap-1 flex-shrink-0">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                                     data-bs-target="#modalDetailSiswa{{ $s->id }}">
-                                    <i class="bi bi-eye text-secondary"></i>
+                                    <i class="bi bi-eye"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
                                     data-bs-target="#modalEditSiswa{{ $s->id }}">
-                                    <i class="bi bi-pencil text-primary"></i>
+                                    <i class="bi bi-pencil"></i>
                                 </button>
                                 <form action="{{ route('admin.kelas.students.destroy', [$kelas->id, $s->id]) }}"
                                     method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-hapus"
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-hapus"
                                         data-id="{{ $s->id }}" data-nama="{{ $s->nama }}">
-                                        <i class="bi bi-trash text-danger"></i>
+                                        <i class="bi bi-trash danger"></i>
                                     </button>
                                 </form>
                             </div>
@@ -411,29 +410,37 @@
                 class="modal-content border-0 rounded-4 shadow-lg">
                 @csrf
                 <div class="modal-header border-0 pb-0 pt-4 px-4">
-                    <h6 class="fw-bold mb-0 text-primary">Import Siswa via CSV</h6>
+                    <h6 class="fw-bold mb-0 text-primary">Import Siswa via xlsx</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body px-4">
                     <div class="alert alert-info small rounded-3 mb-3"
                         style="background-color: #eff6ff; border-left: 4px solid #3b82f6;">
                         <i class="bi bi-info-circle me-1"></i>
-                        Format kolom: <code>nama, nis, jk (L/P), agama, tgl_lahir (YYYY-MM-DD), alamat, no_telp,
-                            no_telp_ortu</code>
+                        Upload file Excel (.xlsx) sesuai template. Download template terlebih dahulu.
                     </div>
+
+                    {{-- Template --}}
+                    <div class="mb-3">
+                        <a href="{{ route('admin.students.template', $kelas->id) }}"
+                            class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i>Download Template xlsx
+                        </a>
+                    </div>
+
                     <div class="mb-0">
-                        <label class="form-label small fw-semibold">Pilih File CSV</label>
-                        <input type="file" name="file_siswa" class="form-control" accept=".csv" required>
-                        <div class="form-text small text-muted">File harus berekstensi .csv</div>
+                        <label class="form-label small fw-semibold">Pilih File xlsx</label>
+                        <input type="file" name="file_siswa" class="form-control" accept=".xlsx,.xls" required>
+                        <div class="form-text small text-muted">File harus berekstensi .xlsx</div>
                     </div>
-                </div>
-                <div class="modal-footer border-0 pt-0 pb-4 px-4">
-                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                        data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-success btn-sm">
-                        <i class="bi bi-upload me-1"></i>Upload & Import
-                    </button>
-                </div>
+
+                    <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                            data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="bi bi-upload me-1"></i>Upload & Import
+                        </button>
+                    </div>
             </form>
         </div>
     </div>

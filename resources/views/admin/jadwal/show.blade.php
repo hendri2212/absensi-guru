@@ -88,18 +88,18 @@
                                 </td>
                                 <td class="text-center pe-4">
                                     <div class="d-flex justify-content-center gap-1">
-                                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                        <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
                                             data-bs-target="#modalEditJadwal{{ $j->id }}" title="Edit">
-                                            <i class="bi bi-pencil text-primary"></i>
+                                            <i class="bi bi-pencil"></i>
                                         </button>
                                         <form action="{{ route('admin.jadwal.destroy', $j->id) }}" method="POST"
                                             class="d-inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" class="btn btn-sm btn-outline-secondary btn-hapus"
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-hapus"
                                                 data-id="{{ $j->id }}" data-nama="{{ $j->nama_mapel }}"
                                                 title="Hapus">
-                                                <i class="bi bi-trash text-danger"></i>
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     </div>

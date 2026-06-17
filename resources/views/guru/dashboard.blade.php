@@ -153,10 +153,12 @@
                                     Kelas {{ $jadwal->classroom->tingkat }}-{{ $jadwal->classroom->paralel }}
                                 </small>
                             </div>
-                            <a href="{{ route('guru.absensi.create', $jadwal->id) }}"
-                                class="btn btn-sm btn-light border flex-shrink-0">
-                                <i class="bi bi-arrow-right text-primary"></i>
-                            </a>
+                            @if ($isActiveYear)
+                                <a href="{{ route('guru.absensi.create', $jadwal->id) }}"
+                                    class="btn btn-sm btn-light border flex-shrink-0">
+                                    <i class="bi bi-arrow-right text-primary"></i>
+                                </a>
+                            @endif
                         </div>
                     @endforeach
                 </div>

@@ -132,7 +132,7 @@
                     </div>
 
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary py-2">
+                        <button type="submit" class="btn btn-warning py-2">
                             <i class="bi bi-save me-1"></i>Perbarui Data Guru
                         </button>
                         <a href="{{ route('admin.guru.index') }}" class="btn btn-outline-secondary py-2">Batal</a>

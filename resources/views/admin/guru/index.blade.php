@@ -195,7 +195,7 @@
                             </div>
                         </div>
                         <div class="modal-footer border-0 pt-0 pb-4 px-4">
-                            <a href="{{ route('admin.guru.edit', $teacher->id) }}" class="btn btn-primary btn-sm">
+                            <a href="{{ route('admin.guru.edit', $teacher->id) }}" class="btn btn-warning btn-sm">
                                 <i class="bi bi-pencil me-1"></i>Edit Data
                             </a>
                             <button type="button" class="btn btn-outline-secondary btn-sm"

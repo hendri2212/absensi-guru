@@ -20,7 +20,7 @@ class AdminController extends Controller
             ? AcademicYear::find($selectedYearId)
             : AcademicYear::where('is_active', true)->first();
 
-        // ✅ Pindah date range ke helper method — konsisten dengan DashboardController guru
+        // Pindah date range ke helper method
         [$startDate, $endDate] = $this->getDateRange($filter);
 
         $today = now()->toDateString();

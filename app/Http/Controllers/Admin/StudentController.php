@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Imports\StudentsImport;
 use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\Student;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StudentController extends Controller
 {
@@ -87,44 +89,103 @@ class StudentController extends Controller
     public function import(Request $request, $kelas_id)
     {
         $request->validate([
-            'file_siswa' => 'required|file|mimes:csv,txt',
+            'file_siswa' => 'required|file|mimes:xlsx,xls',
         ]);
 
-        $file = $request->file('file_siswa');
-        $rows = array_map('str_getcsv', file($file->getPathname()));
-        $header = array_shift($rows);
+        $import = new StudentsImport($kelas_id);
+        Excel::import($import, $request->file('file_siswa'));
 
-        $berhasil = 0;
-        $gagal = 0;
-
-        foreach ($rows as $row) {
-            if (count($row) < count($header)) {
-                continue;
-            }
-
-            $data = array_combine($header, $row);
-            $validator = Validator::make($data, [
-                'nama' => 'required|string',
-                'nis' => 'required|max:10|unique:students,nis',
-                'jk' => 'required|in:L,P',
-                'agama' => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
-                'tgl_lahir' => 'required|date',
-                'alamat' => 'required|string',
-                'no_telp' => 'nullable|string',
-                'no_telp_ortu' => 'nullable|string',
-            ]);
-
-            if ($validator->fails()) {
-                $gagal++;
-
-                continue;
-            }
-
-            Student::create(array_merge($validator->validated(), ['classroom_id' => $kelas_id]));
-            $berhasil++;
-        }
+        $berhasil = $import->berhasil;
+        $gagal    = $import->gagal + count($import->failures()) + count($import->errors());
 
         return redirect()->back()->with('success', "Import selesai: {$berhasil} berhasil, {$gagal} dilewati.");
+    }
+
+    public function downloadTemplate($kelas_id = null)
+    {
+        return Excel::download(new class implements
+            \Maatwebsite\Excel\Concerns\FromArray,
+            \Maatwebsite\Excel\Concerns\WithEvents,
+            \Maatwebsite\Excel\Concerns\WithColumnWidths {
+
+            public function array(): array
+            {
+                return [
+                    ['nama', 'nis', 'jk', 'agama', 'tgl_lahir', 'alamat', 'no_telp', 'no_telp_ortu'],
+                    ['Budi Santoso', '1234567890', 'L', 'Islam', '2010-01-15', 'Jl. Merdeka No 1', '081234567890', '081234567891'],
+                    ['Siti Rahayu', '1234567891', 'P', 'Islam', '2010-05-20', 'Jl. Sudirman No 5', '081234567892', '081234567893'],
+                ];
+            }
+
+            public function columnWidths(): array
+            {
+                return [
+                    'A' => 25, // nama
+                    'B' => 15, // nis
+                    'C' => 8,  // jk
+                    'D' => 12, // agama
+                    'E' => 15, // tgl_lahir
+                    'F' => 30, // alamat
+                    'G' => 18, // no_telp
+                    'H' => 18, // no_telp_ortu
+                ];
+            }
+
+            public function registerEvents(): array
+            {
+                return [
+                    \Maatwebsite\Excel\Events\AfterSheet::class => function (\Maatwebsite\Excel\Events\AfterSheet $event) {
+                        $sheet = $event->sheet->getDelegate();
+
+                        // Style header
+                        $sheet->getStyle('A1:H1')->applyFromArray([
+                            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                            'fill' => [
+                                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                                'startColor' => ['rgb' => '2563EB'],
+                            ],
+                            'alignment' => [
+                                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                            ],
+                        ]);
+
+                        // Style contoh data
+                        $sheet->getStyle('A2:H3')->applyFromArray([
+                            'fill' => [
+                                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                                'startColor' => ['rgb' => 'EFF6FF'],
+                            ],
+                            'font' => ['color' => ['rgb' => '6B7280'], 'italic' => true],
+                        ]);
+
+                        // Border
+                        $sheet->getStyle('A1:H3')->applyFromArray([
+                            'borders' => [
+                                'allBorders' => [
+                                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                                    'color' => ['rgb' => 'D1D5DB'],
+                                ],
+                            ],
+                        ]);
+
+                        // Note di baris 5
+                        $sheet->setCellValue('A5', '* Hapus baris contoh (baris 2 dan 3) sebelum upload');
+                        $sheet->getStyle('A5')->applyFromArray([
+                            'font' => ['italic' => true, 'color' => ['rgb' => 'DC2626']],
+                        ]);
+
+                        $sheet->setCellValue('A6', '* Kolom jk diisi L (Laki-laki) atau P (Perempuan)');
+                        $sheet->getStyle('A6')->getFont()->setItalic(true)->getColor()->setRGB('6B7280');
+
+                        $sheet->setCellValue('A7', '* Kolom tgl_lahir format YYYY-MM-DD (contoh: 2010-01-15)');
+                        $sheet->getStyle('A7')->getFont()->setItalic(true)->getColor()->setRGB('6B7280');
+
+                        $sheet->setCellValue('A8', '* Kolom agama diisi: Islam, Kristen, Katolik, Hindu, Buddha, Khonghucu');
+                        $sheet->getStyle('A8')->getFont()->setItalic(true)->getColor()->setRGB('6B7280');
+                    },
+                ];
+            }
+        }, 'template_import_siswa.xlsx');
     }
 
     // ══════════════════════════════════════════════════

@@ -36,19 +36,19 @@
                                             <td class="fw-semibold text-dark">{{ $s->nama_mapel }}</td>
                                             <td class="text-center pe-4">
                                                 <div class="d-flex justify-content-center gap-1">
-                                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                                    <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
                                                         data-bs-target="#modalEditMapel{{ $s->id }}" title="Edit">
-                                                        <i class="bi bi-pencil text-warning"></i>
+                                                        <i class="bi bi-pencil"></i>
                                                     </button>
                                                     <form action="{{ route('admin.mapel.destroy', $s->id) }}" method="POST"
                                                         class="d-inline">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary btn-hapus"
+                                                            class="btn btn-sm btn-outline-danger btn-hapus"
                                                             data-id="{{ $s->id }}" data-nama="{{ $s->nama_mapel }}"
                                                             title="Hapus">
-                                                            <i class="bi bi-trash text-danger"></i>
+                                                            <i class="bi bi-trash danger"></i>
                                                     </form>
                                                 </div>
                                             </td>

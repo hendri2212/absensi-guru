@@ -111,6 +111,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/kelas/{kelas_id}/students', [StudentController::class, 'index'])->name('kelas.students.index');
         Route::post('/kelas/{kelas_id}/students', [StudentController::class, 'store'])->name('kelas.students.store');
         Route::post('/kelas/{kelas_id}/students/import', [StudentController::class, 'import'])->name('students.import');
+        Route::get('/kelas/{kelas_id}/students/template', [StudentController::class, 'downloadTemplate'])->name('students.template');
 
         // kelas
         Route::put('/kelas/{kelas_id}/students/{id}', [StudentController::class, 'update'])->name('kelas.students.update');

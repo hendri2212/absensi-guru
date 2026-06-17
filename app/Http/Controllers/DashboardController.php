@@ -145,19 +145,22 @@ class DashboardController extends Controller
         $jadwalHariIni = Schedule::with(['subject:id,nama_mapel', 'classroom:id,tingkat,paralel'])
             ->where('teacher_id', $teacherId)
             ->where('hari', $hariIni)
+            ->when($activeYear, fn($q) => $q->where('academic_year_id', $activeYear->id))
             ->orderBy('jam_mulai', 'asc')
             ->get();
 
         // Totals
         $totalKelas = Schedule::where('teacher_id', $teacherId)
+            ->when($activeYear, fn($q) => $q->where('academic_year_id', $activeYear->id))
             ->distinct('classroom_id')
             ->count('classroom_id');
 
         $totalSiswa = DB::table('students')
-            ->whereIn('classroom_id', function ($q) use ($teacherId) {
+            ->whereIn('classroom_id', function ($q) use ($teacherId, $activeYear) {
                 $q->select('classroom_id')
                     ->from('schedules')
                     ->where('teacher_id', $teacherId)
+                    ->when($activeYear, fn($q) => $q->where('academic_year_id', $activeYear->id))
                     ->distinct();
             })
             ->whereNull('deleted_at')
