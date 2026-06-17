@@ -30,6 +30,11 @@
                                 </a>
                             </li>
                             <li>
+                                <a class="dropdown-item px-3" href="{{ route('admin.backup.index') }}">
+                                    <i class="bi bi-database me-2 text-success"></i>Backup & Restore
+                                </a>
+                            </li>
+                            <li>
                                 <hr class="dropdown-divider my-1">
                             </li>
                         @endif

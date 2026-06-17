@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AcademicYearController;
 use App\Http\Controllers\Admin\AdminController as DashboardAdmin;
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\ClassroomController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\StudentController;
@@ -85,9 +86,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('evaluations', EvaluationController::class)->except(['create']);
     });
 
-    // ------------------------------------------
-    // MODUL ADMIN (Dikelompokkan Jadi Satu)
-    // ------------------------------------------
+    // Admin
     Route::middleware('role:Admin')->prefix('admin')->name('admin.')->group(function () {
         // Dashboard
         Route::get('/dashboard', [DashboardAdmin::class, 'index'])->name('dashboard');
@@ -121,5 +120,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/academic-year', [AcademicYearController::class, 'index'])->name('tahun-ajaran.index');
         Route::post('/academic-year', [AcademicYearController::class, 'store'])->name('tahun-ajaran.store');
         Route::post('/academic-year/{id}/activate', [AcademicYearController::class, 'activate'])->name('tahun-ajaran.activate');
+
+        // Backup Database
+        Route::get('/backup', [BackupController::class, 'index'])->name('backup.index');
+        Route::get('/backup/download', [BackupController::class, 'download'])->name('backup.download');
+        Route::post('/backup/restore', [BackupController::class, 'restore'])->name('backup.restore');
     });
 });

@@ -108,6 +108,30 @@
         }
 
         // =====================
+        // SWEETALERT - RESTORE DATABASE
+        // =====================
+        const btnRestore = document.getElementById('btnRestore');
+        if (btnRestore) {
+            btnRestore.addEventListener('click', function() {
+                Swal.fire({
+                    title: 'Yakin ingin restore?',
+                    text: 'Data saat ini akan tertimpa permanen dan tidak bisa dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Ya, Restore!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('formRestore').submit();
+                    }
+                });
+            });
+        }
+
+        // =====================
         // SWEETALERT - HAPUS GURU/SISWA
         // =====================
         document.addEventListener('click', function(event) {
