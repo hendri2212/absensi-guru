@@ -235,7 +235,8 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Tanggal Lahir</label>
-                            <input type="date" name="tgl_lahir" class="form-control" required>
+                            <input type="date" name="tgl_lahir" class="form-control" max="{{ date('Y-m-d') }}"
+                                required>
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">Alamat</label>
@@ -309,7 +310,8 @@
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold">Tanggal Lahir</label>
                                 <input type="date" name="tgl_lahir" class="form-control"
-                                    value="{{ \Carbon\Carbon::parse($s->tgl_lahir)->format('Y-m-d') }}" required>
+                                    value="{{ \Carbon\Carbon::parse($s->tgl_lahir)->format('Y-m-d') }}"
+                                    max="{{ date('Y-m-d') }}" required>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-semibold">Alamat</label>

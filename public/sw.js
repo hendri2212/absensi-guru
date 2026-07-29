@@ -1,5 +1,5 @@
-const CACHE_NAME = "siskul-v3";
-const STATIC_ASSETS = ["/css/app-custom.css"];
+const CACHE_NAME = "siskul-v4";
+const STATIC_ASSETS = ["/css/app-custom.css", "/offline.html"];
 const EXCLUDE_FROM_CACHE = ["/login", "/logout", "/csrf-token", "/"];
 
 self.addEventListener("install", (event) => {
@@ -38,6 +38,10 @@ self.addEventListener("fetch", (event) => {
           .then((cache) => cache.put(event.request, clone));
         return response;
       })
-      .catch(() => caches.match(event.request)),
+      .catch(() =>
+        caches
+          .match(event.request)
+          .then((cached) => cached || caches.match("/offline.html")),
+      ),
   );
 });

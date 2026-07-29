@@ -15,7 +15,6 @@ class AttendanceRequest extends FormRequest
     {
         return [
             'schedule_id' => 'required|exists:schedules,id',
-            'tanggal' => 'required|date',
             'absensi' => 'required|array',
             'absensi.*.student_id' => 'required|exists:students,id',
             'absensi.*.status' => 'required|in:Sakit,Izin,Alpa,Hadir',

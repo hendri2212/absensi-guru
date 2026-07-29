@@ -61,12 +61,12 @@ class AttendanceController extends Controller
 
         $recent_attendances = Attendance::with(['schedule.subject', 'schedule.classroom'])
             ->withCount([
-                'details as h' => fn ($q) => $q->where('status', 'Hadir'),
-                'details as i' => fn ($q) => $q->where('status', 'Izin'),
-                'details as s' => fn ($q) => $q->where('status', 'Sakit'),
-                'details as a' => fn ($q) => $q->where('status', 'Alpa'),
+                'details as h' => fn($q) => $q->where('status', 'Hadir'),
+                'details as i' => fn($q) => $q->where('status', 'Izin'),
+                'details as s' => fn($q) => $q->where('status', 'Sakit'),
+                'details as a' => fn($q) => $q->where('status', 'Alpa'),
             ])
-            ->whereHas('schedule', fn ($q) => $q->where('teacher_id', $teacherId))
+            ->whereHas('schedule', fn($q) => $q->where('teacher_id', $teacherId))
             ->where('academic_year_id', $activeYear->id)
             ->latest('tanggal')
             ->take(5)
@@ -106,8 +106,8 @@ class AttendanceController extends Controller
                     $q->where('academic_year_id', $selectedYear->id);
                 }
             })
-            ->whereHas('attendance.schedule', fn ($q) => $q->where('teacher_id', $teacherId))
-            ->when($statusFilter, fn ($q) => $q->where('status', $statusFilter))
+            ->whereHas('attendance.schedule', fn($q) => $q->where('teacher_id', $teacherId))
+            ->when($statusFilter, fn($q) => $q->where('status', $statusFilter))
             ->with([
                 'attendance:id,tanggal,schedule_id,academic_year_id',
                 'attendance.schedule:id,subject_id,classroom_id,jam_mulai,jam_habis',
@@ -130,7 +130,7 @@ class AttendanceController extends Controller
                     $q->where('academic_year_id', $selectedYear->id);
                 }
             })
-            ->whereHas('attendance.schedule', fn ($q) => $q->where('teacher_id', $teacherId))
+            ->whereHas('attendance.schedule', fn($q) => $q->where('teacher_id', $teacherId))
             ->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status')
@@ -188,8 +188,8 @@ class AttendanceController extends Controller
 
         // Rekapitulasi nilai per mapel
         $nilaiPerMapel = $evaluationDetails
-            ->groupBy(fn ($d) => $d->evaluation?->subject->nama_mapel ?? 'Lainnya')
-            ->map(fn ($group) => [
+            ->groupBy(fn($d) => $d->evaluation?->subject->nama_mapel ?? 'Lainnya')
+            ->map(fn($group) => [
                 'count' => $group->count(),
                 'rata' => round($group->avg('nilai'), 1),
                 'maks' => $group->max('nilai'),
@@ -237,7 +237,7 @@ class AttendanceController extends Controller
         $validated = $request->validated();
 
         $attendance = Attendance::where('schedule_id', $schedule_id)
-            ->where('tanggal', $validated['tanggal'])
+            ->where('tanggal', now()->toDateString())
             ->firstOrFail();
 
         DB::transaction(function () use ($validated, $attendance) {
@@ -281,7 +281,7 @@ class AttendanceController extends Controller
             $attendance = Attendance::updateOrCreate(
                 [
                     'schedule_id' => $validated['schedule_id'],
-                    'tanggal' => $validated['tanggal'],
+                    'tanggal' => now()->toDateString()
                 ],
                 [
                     'academic_year_id' => $activeYear->id,
@@ -311,33 +311,7 @@ class AttendanceController extends Controller
                 'details.student',
             ]),
         ]);
-    }
-
-    public function update(AttendanceRequest $request, Attendance $attendance)
-    {
-        $validated = $request->validated();
-
-        return DB::transaction(function () use ($validated, $attendance) {
-            $attendance->update([
-                'schedule_id' => $validated['schedule_id'],
-                'tanggal' => $validated['tanggal'],
-            ]);
-
-            $attendance->details()->delete();
-
-            foreach ($validated['absensi'] as $item) {
-                $attendance->details()->create([
-                    'student_id' => $item['student_id'],
-                    'status' => $item['status'],
-                ]);
-            }
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Absensi berhasil diperbarui',
-                'data' => $attendance->load('details.student'),
-            ]);
-        });
+        
     }
 
     public function historyAbsensi($schedule_id)
@@ -356,12 +330,12 @@ class AttendanceController extends Controller
             : AcademicYear::where('is_active', true)->first();
 
         $histories = Attendance::where('schedule_id', $schedule_id)
-            ->when($selectedYear, fn ($q) => $q->where('academic_year_id', $selectedYear->id))
+            ->when($selectedYear, fn($q) => $q->where('academic_year_id', $selectedYear->id))
             ->withCount([
-                'details as h' => fn ($q) => $q->where('status', 'Hadir'),
-                'details as i' => fn ($q) => $q->where('status', 'Izin'),
-                'details as s' => fn ($q) => $q->where('status', 'Sakit'),
-                'details as a' => fn ($q) => $q->where('status', 'Alpa'),
+                'details as h' => fn($q) => $q->where('status', 'Hadir'),
+                'details as i' => fn($q) => $q->where('status', 'Izin'),
+                'details as s' => fn($q) => $q->where('status', 'Sakit'),
+                'details as a' => fn($q) => $q->where('status', 'Alpa'),
             ])
             ->orderBy('tanggal')
             ->get();

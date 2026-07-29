@@ -18,7 +18,7 @@ class EvaluationRequest extends FormRequest
             'subject_id' => 'sometimes|required|exists:subjects,id',
             'jenis' => 'required|in:Tugas,UH,UTS,UAS',
             'nama_penilaian' => 'required|string|max:30',
-            'tanggal' => 'required|date',
+            'tanggal' => 'required|date|before_or_equal:today',
             'penilaian' => 'required|array',
             'penilaian.*.student_id' => 'required|exists:students,id',
             'penilaian.*.nilai' => 'nullable|numeric|min:0|max:100',

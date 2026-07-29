@@ -48,7 +48,11 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold small">Tanggal</label>
-                            <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="tanggal" class="form-control"
+                                value="{{ old('tanggal', date('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required>
+                            @error('tanggal')
+                                <div class="text-danger small-mt-1"> {{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
 

@@ -66,4 +66,17 @@ class Student extends Model
     {
         return $this->hasMany(StudentClassHistory::class)->latest();
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($student) {
+            foreach (['nama', 'alamat'] as $field) {
+                if (!empty($student->$field)) {
+                    $student->$field = preg_replace('/\s+/', ' ', trim($student->$field));
+                }
+            }
+        });
+    }
 }

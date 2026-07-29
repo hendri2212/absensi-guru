@@ -25,7 +25,6 @@
         <form action="{{ route('guru.absensi.store') }}" method="POST">
             @csrf
             <input type="hidden" name="schedule_id" value="{{ $schedule->id }}">
-            <input type="hidden" name="tanggal" value="{{ date('Y-m-d') }}">
 
             @foreach ($students as $index => $student)
                 <div class="card border-0 shadow rounded-3 mb-3">

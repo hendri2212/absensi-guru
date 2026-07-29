@@ -281,7 +281,3 @@
 
     </div>
 @endsection
-
-@push('scripts')
-    @include('components.scripts')
-@endpush

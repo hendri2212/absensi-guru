@@ -36,10 +36,14 @@ class StudentController extends Controller
             'nis' => 'required|max:10|unique:students,nis',
             'jk' => 'required|in:L,P',
             'agama' => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
-            'tgl_lahir' => 'required|date',
+            'tgl_lahir' => 'required|date|before_or_equal:today',
             'alamat' => 'required|string',
-            'no_telp' => 'nullable|string',
-            'no_telp_ortu' => 'nullable|string',
+            'no_telp' => ['nullable', 'regex:/^\+?[0-9]{8,15}$/'],
+            'no_telp_ortu' => ['nullable', 'regex:/^\+?[0-9]{8,15}$/'],
+        ], [
+            'tgl_lahir.before_or_equal' => 'Tanggal lahir tidak boleh lebih dari hari ini.',
+            'no_telp.regex' => 'Nomor telepon harus berupa angka (8-15 digit).',
+            'no_telp_ortu.regex' => 'Nomor telepon orang tua harus berupa angka (8-15 digit).',
         ]);
 
         if ($validator->fails()) {
@@ -58,10 +62,14 @@ class StudentController extends Controller
             'nis' => 'required|max:10|unique:students,nis,' . $id,
             'jk' => 'required|in:L,P',
             'agama' => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Khonghucu',
-            'tgl_lahir' => 'required|date',
+            'tgl_lahir' => 'required|date|before_or_equal:today',
             'alamat' => 'required|string',
-            'no_telp' => 'nullable|string',
-            'no_telp_ortu' => 'nullable|string',
+            'no_telp' => ['nullable', 'regex:/^\+?[0-9]{8,15}$/'],
+            'no_telp_ortu' => ['nullable', 'regex:/^\+?[0-9]{8,15}$/'],
+        ], [
+            'tgl_lahir.before_or_equal' => 'Tanggal lahir tidak boleh lebih dari hari ini.',
+            'no_telp.regex' => 'Nomor telepon harus berupa angka (8-15 digit).',
+            'no_telp_ortu.regex' => 'Nomor telepon orang tua harus berupa angka (8-15 digit).',
         ]);
 
         if ($validator->fails()) {
